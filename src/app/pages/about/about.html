@@ -1,0 +1,441 @@
+<main>
+  <!-- Hero Section -->
+  <section class="section-padding-sm bg-gradient-to-b from-background to-secondary/30">
+    <div class="container-custom">
+      <div class="max-w-4xl mx-auto text-center">
+        <h1 class="gradient-text text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+          {{ heroTitle }}
+        </h1>
+        <p class="text-xl md:text-2xl text-muted-foreground leading-relaxed">
+          {{ heroTagline }}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Values Section -->
+  <section class="section-padding-sm">
+    <div class="container-custom">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">
+          Mes Valeurs Fondamentales
+        </h2>
+        <div class="space-y-6">
+          @for (value of coreValues; track value.title) {
+            <div class="glass-card hover-lift p-8">
+              <h3 class="text-2xl font-semibold mb-4 gradient-text-subtle">
+                {{ value.title }}
+              </h3>
+              <p class="text-muted-foreground leading-relaxed text-lg">
+                {{ value.description }}
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Professional Vision Section -->
+  <section class="section-padding-sm bg-secondary/30">
+    <div class="container-custom">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">
+          Ma Vision Professionnelle
+        </h2>
+
+        <!-- Current Role Card -->
+        <div class="glass-card p-8 mb-8">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="p-3 bg-primary/10 rounded-xl">
+              <lucide-icon name="briefcase" class="h-8 w-8 text-primary" aria-hidden="true"></lucide-icon>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-2xl font-semibold mb-2">{{ currentRole.position }}</h3>
+              <p class="text-lg text-muted-foreground mb-4">{{ currentRole.company }}</p>
+              <p class="text-muted-foreground leading-relaxed mb-6">
+                {{ currentRole.description }}
+              </p>
+              <div class="flex flex-wrap gap-2">
+                @for (tech of currentRole.technologies; track tech) {
+                  <span class="badge-tech">{{ tech }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Career Goals -->
+        <div>
+          <div class="flex items-center gap-3 mb-6">
+            <lucide-icon name="arrow-right" class="h-6 w-6 text-primary" aria-hidden="true"></lucide-icon>
+            <h3 class="text-xl font-semibold m-0">Objectifs de Carrière</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @for (goal of careerGoals; track goal) {
+              <div class="glass-card p-4 hover-lift">
+                <p class="text-muted-foreground leading-relaxed">{{ goal }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Collaborative Qualities Section -->
+  <section class="section-padding-sm">
+    <div class="container-custom">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">
+          Qualités Collaboratives
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (quality of qualities; track quality.title) {
+            <div class="glass-card hover-lift p-6">
+              <div class="mb-4">
+                <div class="inline-flex p-3 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl">
+                  <lucide-icon [name]="quality.icon" class="h-8 w-8 text-primary" aria-hidden="true"></lucide-icon>
+                </div>
+              </div>
+              <h3 class="text-xl font-semibold mb-3">{{ quality.title }}</h3>
+              <p class="text-muted-foreground leading-relaxed">
+                {{ quality.description }}
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Personal Interests Section -->
+  <section class="section-padding-sm bg-secondary/30">
+    <div class="container-custom">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">
+          Centres d'Intérêt
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          @for (interest of interests; track interest.title) {
+            <div class="glass-card hover-lift p-6">
+              <div class="mb-4">
+                <div class="inline-flex p-3 bg-gradient-to-br from-accent/20 to-primary/20 rounded-xl">
+                  <lucide-icon [name]="interest.icon" class="h-8 w-8 text-accent" aria-hidden="true"></lucide-icon>
+                </div>
+              </div>
+              <h3 class="text-xl font-semibold mb-3">{{ interest.title }}</h3>
+              <p class="text-muted-foreground leading-relaxed">
+                {{ interest.description }}
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Professional Journey Section -->
+  <section class="section-padding-sm">
+    <div class="container-custom">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">
+          Mon Parcours
+        </h2>
+        <div class="glass-card p-6 md:p-8">
+          <div class="space-y-6">
+            @for (item of timelineItems; track item.title; let isLast = $last) {
+              <div class="flex gap-4 md:gap-6">
+                <!-- Timeline Icon & Line -->
+                <div class="flex flex-col items-center">
+                  <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 border-2 border-primary/30">
+                    <lucide-icon [name]="iconName(item.type)" class="h-5 w-5 md:h-6 md:w-6 text-primary" aria-hidden="true"></lucide-icon>
+                  </div>
+                  @if (!isLast) {
+                    <div class="w-0.5 h-full bg-gradient-to-b from-primary/30 to-border mt-2"></div>
+                  }
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1" [class.pb-6]="!isLast">
+                  <button (click)="openModal(item)" class="text-left w-full group/item hover:bg-secondary/50 -m-2 p-2 rounded-lg transition-all cursor-pointer">
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                      <span class="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
+                        {{ typeLabel(item.type) }}
+                      </span>
+                      <span class="text-sm text-muted-foreground">{{ item.date }}</span>
+                      @if (item.details) {
+                        <span class="text-xs text-primary group-hover/item:underline ml-auto">Voir détails →</span>
+                      }
+                    </div>
+
+                    <div class="flex items-center gap-3 mb-2">
+                      @if (item.logo) {
+                        <img [src]="item.logo" [alt]="item.organization + ' logo'" class="w-8 h-8 object-contain">
+                      }
+                      <h3 class="text-lg md:text-xl font-semibold">{{ item.title }}</h3>
+                    </div>
+                    <p class="text-sm md:text-base font-medium text-muted-foreground mb-3">{{ item.organization }}</p>
+
+                    <p class="text-sm md:text-base text-muted-foreground leading-relaxed mb-3">
+                      {{ item.description }}
+                    </p>
+
+                    @if (item.tags && item.tags.length > 0) {
+                      <div class="flex flex-wrap gap-2">
+                        @for (tag of item.tags; track tag) {
+                          <span class="text-xs px-2 py-1 rounded-md bg-secondary text-secondary-foreground">
+                            {{ tag }}
+                          </span>
+                        }
+                      </div>
+                    }
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Philosophy Pillars Section -->
+  <section class="section-padding-sm bg-secondary/30">
+    <div class="container-custom">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">
+          Mes Piliers Professionnels
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          @for (pillar of philosophyPillars; track pillar.title) {
+            <div class="glass-card hover-lift p-8">
+              <h3 class="text-2xl font-semibold mb-4 gradient-text-subtle">
+                {{ pillar.title }}
+              </h3>
+              <p class="text-muted-foreground leading-relaxed">
+                {{ pillar.description }}
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call-to-Action Section -->
+  <section class="section-padding-sm">
+    <div class="container-custom">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6">
+          Découvrez Mon Travail
+        </h2>
+        <p class="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          Explorez mes réalisations concrètes ou contactez-moi pour discuter de vos projets.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <a routerLink="/projects"
+             class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition font-semibold min-w-[200px]">
+            <lucide-icon name="folder-open" class="h-5 w-5" aria-hidden="true"></lucide-icon>
+            Voir Mes Réalisations
+          </a>
+          <a routerLink="/contact"
+             class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md border border-border text-foreground hover:bg-secondary transition font-semibold min-w-[200px]">
+            <lucide-icon name="send" class="h-5 w-5" aria-hidden="true"></lucide-icon>
+            Me Contacter
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal for Experience Details -->
+  @if (isModalOpen && selectedItem) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+         (click)="closeModal()">
+      <div class="bg-card border border-border rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+           (click)="$event.stopPropagation()">
+
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border p-8">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-4 flex-1">
+              @if (selectedItem.logo) {
+                <img [src]="selectedItem.logo" [alt]="selectedItem.organization + ' logo'"
+                     class="w-20 h-20 object-contain rounded-lg bg-white p-2 shadow-md">
+              }
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                    {{ typeLabel(selectedItem.type) }}
+                  </span>
+                  <span class="text-sm font-medium text-muted-foreground">{{ selectedItem.date }}</span>
+                </div>
+                <h2 class="text-3xl font-bold mb-2">{{ selectedItem.title }}</h2>
+                <p class="text-xl text-muted-foreground">{{ selectedItem.organization }}</p>
+              </div>
+            </div>
+            <button (click)="closeModal()"
+                    class="p-2 rounded-lg hover:bg-secondary/50 transition-colors text-2xl leading-none"
+                    aria-label="Fermer">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-8">
+
+          <!-- FOR EXPERIENCES -->
+          @if (selectedItem.type === 'experience') {
+            <div class="space-y-6">
+
+              <!-- Responsabilité & Statut -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                @if (selectedItem.details?.responsibility) {
+                  <div class="p-4 rounded-lg bg-secondary/30">
+                    <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Responsabilité</h3>
+                    <p class="text-lg font-medium">{{ selectedItem.details!.responsibility }}</p>
+                  </div>
+                }
+                @if (selectedItem.details?.status) {
+                  <div class="p-4 rounded-lg bg-secondary/30">
+                    <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Statut</h3>
+                    <p class="text-lg font-medium">{{ selectedItem.details!.status }}</p>
+                  </div>
+                }
+              </div>
+
+              <!-- Missions détaillées -->
+              @if (selectedItem.details?.missions) {
+                <div>
+                  <h3 class="text-xl font-bold mb-4 pb-2 border-b border-border">Missions & Réalisations</h3>
+                  <ul class="space-y-3">
+                    @for (mission of selectedItem.details!.missions!; track $index) {
+                      <li class="flex items-start gap-3 text-muted-foreground">
+                        <span class="text-primary font-bold mt-1">•</span>
+                        <span class="flex-1">{{ mission }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              <!-- Compétences techniques -->
+              @if (selectedItem.tags && selectedItem.tags.length > 0) {
+                <div>
+                  <h3 class="text-xl font-bold mb-4 pb-2 border-b border-border">Compétences techniques</h3>
+                  <div class="flex flex-wrap gap-2">
+                    @for (tag of selectedItem.tags; track $index) {
+                      @if (hasSkillPage(tag)) {
+                        <a [routerLink]="['/skills', getSkillId(tag)]" (click)="closeModal()"
+                           class="px-4 py-2 rounded-lg bg-primary/10 text-primary font-medium border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer">
+                          {{ tag }}
+                        </a>
+                      } @else {
+                        <span class="px-4 py-2 rounded-lg bg-secondary/50 text-muted-foreground font-medium border border-border">
+                          {{ tag }}
+                        </span>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Liens vers réalisations -->
+              @if (selectedItem.details?.relatedProjects && selectedItem.details!.relatedProjects!.length > 0) {
+                <div>
+                  <h3 class="text-xl font-bold mb-4 pb-2 border-b border-border">Réalisations associées</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    @for (project of selectedItem.details!.relatedProjects!; track project.id) {
+                      <a [routerLink]="['/projects', project.id]" (click)="closeModal()"
+                         class="p-4 rounded-lg bg-primary/5 border border-primary/20 text-primary hover:bg-primary/10 transition-all font-medium text-center">
+                        {{ project.name }}
+                      </a>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- FOR EDUCATION/FORMATION -->
+          @if (selectedItem.type === 'education') {
+            <div class="space-y-6">
+
+              <!-- Présentation de l'établissement -->
+              @if (selectedItem.details?.institutionDescription) {
+                <div>
+                  <h3 class="text-xl font-bold mb-4 pb-2 border-b border-border">À propos de l'établissement</h3>
+                  <p class="text-lg text-muted-foreground leading-relaxed">{{ selectedItem.details!.institutionDescription }}</p>
+                </div>
+              }
+
+              <!-- Vision de la pédagogie -->
+              @if (selectedItem.details?.pedagogyVision) {
+                <div>
+                  <h3 class="text-xl font-bold mb-4 pb-2 border-b border-border">Ma vision de la pédagogie</h3>
+                  <p class="text-lg text-muted-foreground leading-relaxed">{{ selectedItem.details!.pedagogyVision }}</p>
+                </div>
+              }
+
+              <!-- Programme / Compétences acquises -->
+              @if (selectedItem.details?.missions) {
+                <div>
+                  <h3 class="text-xl font-bold mb-4 pb-2 border-b border-border">Programme & Compétences acquises</h3>
+                  <ul class="space-y-3">
+                    @for (mission of selectedItem.details!.missions!; track $index) {
+                      <li class="flex items-start gap-3 text-muted-foreground">
+                        <span class="text-primary font-bold mt-1">•</span>
+                        <span class="flex-1">{{ mission }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              <!-- Lien vers le site -->
+              @if (selectedItem.details?.websiteUrl) {
+                <div class="pt-4">
+                  <a [href]="selectedItem.details!.websiteUrl" target="_blank" rel="noopener noreferrer"
+                     class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-all font-semibold">
+                    Visiter le site de l'établissement
+                  </a>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- FOR CERTIFICATIONS -->
+          @if (selectedItem.type === 'certification') {
+            <div class="space-y-6">
+
+              <!-- Description -->
+              <div>
+                <p class="text-lg text-muted-foreground leading-relaxed">{{ selectedItem.description }}</p>
+              </div>
+
+              <!-- Compétences acquises -->
+              @if (selectedItem.details?.missions) {
+                <div>
+                  <h3 class="text-xl font-bold mb-4 pb-2 border-b border-border">Compétences acquises</h3>
+                  <ul class="space-y-3">
+                    @for (mission of selectedItem.details!.missions!; track $index) {
+                      <li class="flex items-start gap-3 text-muted-foreground">
+                        <span class="text-primary font-bold mt-1">•</span>
+                        <span class="flex-1">{{ mission }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+      </div>
+    </div>
+  }
+</main>

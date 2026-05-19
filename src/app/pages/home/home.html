@@ -1,0 +1,239 @@
+<main>
+  <!-- Hero Section -->
+  <section class="relative py-12 md:py-16 lg:py-20 bg-gradient-to-b from-background via-secondary/20 to-background overflow-hidden">
+    <!-- Background decorative elements -->
+    <div class="absolute inset-0 -z-10">
+      <div class="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-float"></div>
+      <div class="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-float-delayed"></div>
+    </div>
+
+    <div class="container-custom">
+      <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+
+        <!-- Texte -->
+        <div class="flex-1 text-center lg:text-left">
+          <h1 class="mb-6 animate-fade-in">
+            Bonjour, je suis <br class="hidden sm:block">
+            <span class="text-primary font-bold">
+              Oumar Khousainov
+            </span>
+          </h1>
+
+          <p class="text-xl md:text-2xl text-muted-foreground mb-4 font-medium animate-fade-in-delay-1">
+            Développeur Web Full Stack
+          </p>
+
+          <p class="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0 animate-fade-in-delay-2">
+            Passionné par le développement d'applications web modernes et performantes,
+            je crée des expériences utilisateur intuitives en utilisant les dernières technologies web.
+          </p>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in-delay-3">
+            <a routerLink="/projects"
+               class="group inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all hover:gap-3 shadow-lg shadow-primary/20">
+              <lucide-icon name="rocket" class="h-5 w-5"></lucide-icon>
+              Voir mes réalisations
+              <lucide-icon name="arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-1"></lucide-icon>
+            </a>
+            <a routerLink="/contact"
+               class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border-2 border-border text-foreground font-semibold hover:bg-secondary transition-all">
+              <lucide-icon name="mail" class="h-5 w-5"></lucide-icon>
+              Me contacter
+            </a>
+          </div>
+        </div>
+
+        <!-- Photo -->
+        <div class="flex-shrink-0 animate-fade-in-delay-2">
+          <div class="relative">
+            <div class="absolute inset-0 bg-gradient-to-tr from-primary via-accent to-primary opacity-20 rounded-full blur-3xl animate-pulse-slow"></div>
+            <img src="assets/profile-photo.jpg"
+                 alt="Photo de profil. Oumar Khousainov"
+                 class="relative w-64 h-64 md:w-80 md:h-80 rounded-full object-cover shadow-2xl ring-4 ring-primary/10 hover:ring-primary/30 transition-all hover:scale-105">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-16 animate-fade-in-delay-4">
+        @for (stat of stats; track stat.label) {
+          <div class="flex flex-col items-center justify-center p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-all hover:shadow-lg group">
+            <lucide-icon [name]="stat.icon" class="h-8 w-8 text-primary mb-3 group-hover:scale-110 transition-transform"></lucide-icon>
+            <div class="text-4xl font-bold text-foreground mb-1">{{ stat.value }}</div>
+            <div class="text-sm text-muted-foreground">{{ stat.label }}</div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Technologies Section -->
+  <section class="py-12 md:py-16 bg-secondary/30">
+    <div class="container-custom">
+      <div class="text-center mb-12">
+        <h2 class="mb-4">Compétences & Technologies</h2>
+        <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Expertise dans un large éventail de technologies modernes pour créer des solutions complètes et performantes
+        </p>
+      </div>
+
+      <div class="grid grid-cols-6 gap-3 sm:gap-4 max-w-5xl mx-auto">
+        @for (tech of mainTechnologies; track tech.name) {
+          <a [routerLink]="['/skills', tech.id]"
+             class="group flex flex-col items-center justify-center p-3 sm:p-5 rounded-xl bg-card border border-border hover:border-primary/50 transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer">
+            <img [src]="tech.logo"
+                 [alt]="tech.name + ' logo'"
+                 class="w-9 h-9 sm:w-12 sm:h-12 object-contain mb-2 sm:mb-3 group-hover:scale-110 transition-transform">
+            <span class="text-xs sm:text-sm font-medium text-center text-muted-foreground group-hover:text-foreground transition-colors">
+              {{ tech.name }}
+            </span>
+          </a>
+        }
+      </div>
+
+      <div class="text-center mt-10">
+        <a routerLink="/skills"
+           class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+          <lucide-icon name="target" class="h-5 w-5"></lucide-icon>
+          Voir toutes mes compétences
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Projects Section -->
+  <section class="py-12 md:py-16">
+    <div class="container-custom">
+      <div class="text-center mb-12">
+        <h2 class="mb-4">Réalisations Récentes</h2>
+        <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Découvrez quelques-uns de mes projets les plus récents et les plus aboutis
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        @for (project of featuredProjects; track project.id) {
+          <a [routerLink]="['/projects', project.id]"
+             class="group block p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-all hover:shadow-xl hover:-translate-y-2">
+            <div class="flex items-center gap-4 mb-4">
+              <img [src]="project.logo"
+                   [alt]="project.title + ' logo'"
+                   class="w-12 h-12 object-contain rounded-lg">
+              <h3 class="text-xl font-bold group-hover:text-primary transition-colors">
+                {{ project.title }}
+              </h3>
+            </div>
+            <p class="text-muted-foreground mb-4 line-clamp-2">
+              {{ project.description }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              @for (tag of project.tags; track tag) {
+                <span class="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
+                  {{ tag }}
+                </span>
+              }
+            </div>
+            <div class="flex items-center gap-2 mt-4 text-primary font-medium group-hover:gap-3 transition-all">
+              Voir le projet
+              <lucide-icon name="arrow-right" class="h-4 w-4"></lucide-icon>
+            </div>
+          </a>
+        }
+      </div>
+
+      <div class="text-center mt-10">
+        <a routerLink="/projects"
+           class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+          <lucide-icon name="layout-grid" class="h-5 w-5"></lucide-icon>
+          Voir tous les projets
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values Section -->
+  <section class="py-12 md:py-16 bg-secondary/30">
+    <div class="container-custom">
+      <div class="text-center mb-12">
+        <h2 class="mb-4">Un développeur passionné</h2>
+        <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Je conçois des applications web complètes, robustes et élégantes, en veillant à la qualité,
+          à la performance et à l'accessibilité sur l'ensemble de la stack.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="group p-8 rounded-xl bg-card border border-border hover:border-primary/50 transition-all hover:shadow-xl">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary mb-4 group-hover:scale-110 transition-transform">
+            <lucide-icon name="zap" class="h-7 w-7"></lucide-icon>
+          </div>
+          <h3 class="text-xl font-bold mb-3">Performance</h3>
+          <p class="text-muted-foreground leading-relaxed">
+            Solutions conçues pour garantir rapidité, stabilité et confort d'utilisation.
+            Optimisation continue pour des expériences fluides.
+          </p>
+        </div>
+
+        <div class="group p-8 rounded-xl bg-card border border-border hover:border-primary/50 transition-all hover:shadow-xl">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary mb-4 group-hover:scale-110 transition-transform">
+            <lucide-icon name="trending-up" class="h-7 w-7"></lucide-icon>
+          </div>
+          <h3 class="text-xl font-bold mb-3">Veille technologique</h3>
+          <p class="text-muted-foreground leading-relaxed">
+            Exploration et intégration raisonnée de technologies modernes et adaptées.
+            Apprentissage continu pour rester à la pointe.
+          </p>
+        </div>
+
+        <div class="group p-8 rounded-xl bg-card border border-border hover:border-primary/50 transition-all hover:shadow-xl">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10 text-primary mb-4 group-hover:scale-110 transition-transform">
+            <lucide-icon name="shield" class="h-7 w-7"></lucide-icon>
+          </div>
+          <h3 class="text-xl font-bold mb-3">Rigueur</h3>
+          <p class="text-muted-foreground leading-relaxed">
+            Développement structuré, lisible et durable, respectant les standards du métier.
+            Code de qualité maintenu dans la durée.
+          </p>
+        </div>
+      </div>
+
+      <div class="text-center mt-12">
+        <a routerLink="/about"
+           class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+          <lucide-icon name="user" class="h-5 w-5"></lucide-icon>
+          En savoir plus sur moi
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-8 md:py-12 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10">
+    <div class="container-custom">
+      <div class="max-w-3xl mx-auto text-center">
+        <h2 class="mb-4">Travaillons ensemble</h2>
+        <p class="text-lg text-muted-foreground mb-8">
+          Vous avez un projet en tête ? N'hésitez pas à me contacter pour en discuter.
+          Je suis toujours ouvert aux nouvelles opportunités et collaborations.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a routerLink="/contact"
+             class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+            <lucide-icon name="mail" class="h-5 w-5"></lucide-icon>
+            Me contacter
+          </a>
+          <a href="https://www.linkedin.com/in/oumar-khousainov"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border-2 border-border text-foreground font-semibold hover:bg-secondary transition-all">
+            <lucide-icon name="linkedin" class="h-5 w-5"></lucide-icon>
+            LinkedIn
+            <lucide-icon name="external-link" class="h-4 w-4"></lucide-icon>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

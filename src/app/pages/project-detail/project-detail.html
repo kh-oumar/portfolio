@@ -1,0 +1,578 @@
+<main>
+  <section class="section-padding">
+    <div class="container-custom max-w-5xl">
+      <a routerLink="/projects" class="inline-flex items-center gap-2 px-4 py-2 rounded-md border mb-8 hover:bg-secondary/50 transition-colors">
+        <lucide-icon name="arrow-left" class="h-4 w-4" aria-hidden="true"></lucide-icon>
+        Retour aux réalisations
+      </a>
+
+      @if (!project) {
+        <div class="text-center">
+          <h1 class="mb-4">Projet non trouvé</h1>
+          <a routerLink="/projects" class="underline text-primary">Voir la liste</a>
+        </div>
+      } @else if (project!.rich) {
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- V2 LAYOUT (rich content)                             -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <article class="space-y-14 md:space-y-20" [class]="'theme-' + (project!.rich!.theme || 'default')">
+
+          <!-- HEADER -->
+          <header class="rich-header relative overflow-hidden rounded-3xl border bg-gradient-to-br from-secondary/40 via-secondary/15 to-transparent p-6 md:p-10">
+            <div class="grid md:grid-cols-[auto_1fr] gap-6 md:gap-8 items-center">
+              @if (project!.logo) {
+                <div class="logo-tile w-24 h-24 md:w-32 md:h-32 flex items-center justify-center bg-card rounded-2xl shadow-sm p-3 overflow-hidden border">
+                  <img [src]="project!.logo" [alt]="project!.title" class="w-full h-full object-contain" />
+                </div>
+              }
+              <div>
+                <span class="inline-block text-xs font-bold uppercase tracking-[0.18em] text-primary">{{ project!.year }}</span>
+                <h1 class="m-0 mt-2 text-3xl md:text-5xl font-bold gradient-text">{{ project!.title }}</h1>
+                @if (project!.rich!.tagline) {
+                  <p class="rich-tagline">{{ project!.rich!.tagline }}</p>
+                }
+                <p class="text-base md:text-xl text-muted-foreground mt-3 leading-relaxed">{{ project!.description }}</p>
+                <div class="flex flex-wrap gap-2 mt-4">
+                  @for (tag of project!.tags; track tag) {
+                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium
+                                 bg-primary/5 text-primary border-primary/15">{{ tag }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            @if (project!.url) {
+              <div class="flex justify-end mt-6 md:mt-8">
+                <a [href]="project!.url" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+                  Voir le projet en ligne
+                  <lucide-icon name="external-link" class="h-4 w-4" aria-hidden="true"></lucide-icon>
+                </a>
+              </div>
+            }
+          </header>
+
+          @if (project!.rich!.keyMetrics?.length) {
+            <!-- BANDEAU CHIFFRES-CLÉS -->
+            <div class="metrics-band">
+              @for (m of project!.rich!.keyMetrics!; track m.label) {
+                <div class="metric-cell">
+                  <div class="metric-value">{{ m.value }}</div>
+                  <div class="metric-label">{{ m.label }}</div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- 01. PRÉSENTATION -->
+          <section>
+            <h2 class="section-heading"><span class="section-num">01</span>Présentation du projet</h2>
+            <div class="prose-zone space-y-4">
+              @for (p of project!.rich!.presentation; track $index) {
+                <p>{{ p }}</p>
+              }
+            </div>
+          </section>
+
+          <!-- 02. OBJECTIFS & CONTEXTE -->
+          <section>
+            <h2 class="section-heading"><span class="section-num">02</span>Objectifs &amp; Contexte</h2>
+
+            <div class="grid md:grid-cols-2 gap-5">
+              <div class="info-block">
+                <h3 class="info-heading">Objectifs</h3>
+                <ul class="space-y-2.5">
+                  @for (obj of project!.rich!.objectives; track obj) {
+                    <li class="info-bullet">{{ obj }}</li>
+                  }
+                </ul>
+              </div>
+
+              <div class="info-block">
+                <h3 class="info-heading">Contexte</h3>
+                <dl class="grid grid-cols-1 gap-3">
+                  <div class="context-row">
+                    <dt>Période</dt><dd>{{ project!.rich!.context.period }}</dd>
+                  </div>
+                  <div class="context-row">
+                    <dt>Cadre</dt><dd>{{ project!.rich!.context.framework }}</dd>
+                  </div>
+                  <div class="context-row">
+                    <dt>Mode</dt><dd>{{ project!.rich!.context.mode }}</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+
+            <!-- Équipe ou Porteur du projet -->
+            @if (project!.rich!.context.team.length) {
+              <div class="info-block mt-5">
+                <h3 class="info-heading">{{ project!.rich!.context.team.length === 1 ? 'Porteur du projet' : 'Équipe' }}</h3>
+                <div class="grid gap-3" [ngClass]="project!.rich!.context.team.length > 1 ? 'md:grid-cols-2' : ''">
+                  @for (m of project!.rich!.context.team; track m.role) {
+                    <div class="team-card">
+                      <div class="font-semibold">{{ m.role }}</div>
+                      @if (m.name) { <div class="text-xs text-muted-foreground mt-0.5">{{ m.name }}</div> }
+                      <p class="text-sm text-muted-foreground mt-1.5 mb-0 leading-relaxed">{{ m.description }}</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Organisation + Stack -->
+            <div class="grid gap-5 mt-5" [ngClass]="project!.rich!.context.organization?.length ? 'md:grid-cols-2' : ''">
+              @if (project!.rich!.context.organization?.length) {
+                <div class="info-block">
+                  <h3 class="info-heading">Organisation projet</h3>
+                  <ul class="space-y-2">
+                    @for (o of project!.rich!.context.organization; track o) {
+                      <li class="info-bullet">{{ o }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+              <div class="info-block">
+                <h3 class="info-heading">Stack technique</h3>
+                <ul class="space-y-2 list-none p-0 m-0">
+                  @for (s of project!.rich!.context.stack; track s.label) {
+                    <li class="text-sm leading-relaxed">
+                      <span class="font-semibold text-foreground">{{ s.label }} :</span>
+                      <span class="text-muted-foreground"> {{ s.value }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+
+            <!-- Enjeux + Risques -->
+            @if (project!.rich!.context.stakes?.length || project!.rich!.context.risks?.length) {
+              <div class="grid gap-5 mt-5" [ngClass]="(project!.rich!.context.stakes?.length && project!.rich!.context.risks?.length) ? 'md:grid-cols-2' : ''">
+                @if (project!.rich!.context.stakes?.length) {
+                  <div class="info-block info-block-primary">
+                    <h3 class="info-heading text-primary">Enjeux</h3>
+                    <ul class="space-y-2">
+                      @for (s of project!.rich!.context.stakes; track s) {
+                        <li class="info-bullet">{{ s }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (project!.rich!.context.risks?.length) {
+                  <div class="info-block info-block-accent">
+                    <h3 class="info-heading text-accent">Risques</h3>
+                    <ul class="space-y-2">
+                      @for (r of project!.rich!.context.risks; track r) {
+                        <li class="info-bullet">{{ r }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          <!-- 03. ÉTAPES & RÉALISATIONS -->
+          <section>
+            <h2 class="section-heading"><span class="section-num">03</span>Étapes &amp; Réalisations</h2>
+            <div class="space-y-5">
+              @for (step of project!.rich!.steps; track step.title; let i = $index) {
+                <div class="step-card">
+                  <div class="step-number">{{ '0' + (i + 1) }}</div>
+                  <div class="step-body">
+                    <h3 class="text-lg md:text-xl font-semibold m-0 mb-1">{{ step.title }}</h3>
+                    @if (step.description) {
+                      <p class="text-sm text-muted-foreground italic mt-0 mb-3">{{ step.description }}</p>
+                    }
+                    <ul class="space-y-2 m-0 p-0">
+                      @for (b of step.bullets; track b) {
+                        <li class="info-bullet">{{ b }}</li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- 04. ACTEURS -->
+          <section>
+            <h2 class="section-heading"><span class="section-num">04</span>Acteurs &amp; Interactions</h2>
+            <div class="grid md:grid-cols-2 gap-4">
+              @for (a of project!.rich!.actors; track a.role) {
+                <div class="actor-card">
+                  <div class="font-semibold m-0">{{ a.role }}</div>
+                  @if (a.name) { <div class="text-xs text-muted-foreground mt-0.5">{{ a.name }}</div> }
+                  <p class="text-sm text-muted-foreground mt-2 mb-0 leading-relaxed">{{ a.description }}</p>
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- 05. RÉSULTATS -->
+          <section>
+            <h2 class="section-heading"><span class="section-num">05</span>Résultats</h2>
+            <div class="grid md:grid-cols-2 gap-5">
+              <div class="info-block info-block-primary">
+                <h3 class="info-heading text-primary">Pour moi</h3>
+
+                <h4 class="results-subheading">Compétences techniques</h4>
+                <ul class="space-y-1.5">
+                  @for (item of project!.rich!.results.personal.technical; track item) {
+                    <li class="info-bullet">{{ item }}</li>
+                  }
+                </ul>
+
+                <h4 class="results-subheading mt-4">Compétences organisationnelles</h4>
+                <ul class="space-y-1.5">
+                  @for (item of project!.rich!.results.personal.organizational; track item) {
+                    <li class="info-bullet">{{ item }}</li>
+                  }
+                </ul>
+
+                <p class="results-conclusion">{{ project!.rich!.results.personal.conclusion }}</p>
+              </div>
+
+              <div class="info-block info-block-accent">
+                <h3 class="info-heading text-accent">Pour l'entreprise</h3>
+
+                <h4 class="results-subheading">Réalisations</h4>
+                <ul class="space-y-1.5">
+                  @for (item of project!.rich!.results.business.achievements; track item) {
+                    <li class="info-bullet">{{ item }}</li>
+                  }
+                </ul>
+
+                <h4 class="results-subheading mt-4">Satisfaction &amp; impact</h4>
+                <ul class="space-y-1.5">
+                  @for (item of project!.rich!.results.business.satisfaction; track item) {
+                    <li class="info-bullet">{{ item }}</li>
+                  }
+                </ul>
+
+                <p class="results-conclusion">{{ project!.rich!.results.business.conclusion }}</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- 06. LENDEMAINS -->
+          @if (project!.rich!.aftermath?.immediate?.length || project!.rich!.aftermath?.distant?.length || project!.rich!.aftermath?.today?.length) {
+            <section>
+              <h2 class="section-heading"><span class="section-num">06</span>Lendemains du projet</h2>
+              <div class="grid md:grid-cols-3 gap-4">
+                @if (project!.rich!.aftermath?.immediate?.length) {
+                  <div class="aftermath-card">
+                    <div class="aftermath-label">Futur immédiat</div>
+                    <ul class="space-y-1.5 mt-2.5 m-0 p-0">
+                      @for (item of project!.rich!.aftermath!.immediate; track item) {
+                        <li class="info-bullet">{{ item }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (project!.rich!.aftermath?.distant?.length) {
+                  <div class="aftermath-card">
+                    <div class="aftermath-label">À distance</div>
+                    <ul class="space-y-1.5 mt-2.5 m-0 p-0">
+                      @for (item of project!.rich!.aftermath!.distant; track item) {
+                        <li class="info-bullet">{{ item }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (project!.rich!.aftermath?.today?.length) {
+                  <div class="aftermath-card">
+                    <div class="aftermath-label">Aujourd'hui</div>
+                    <ul class="space-y-1.5 mt-2.5 m-0 p-0">
+                      @for (item of project!.rich!.aftermath!.today; track item) {
+                        <li class="info-bullet">{{ item }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+
+          <!-- 07. REGARD CRITIQUE -->
+          <section>
+            <h2 class="section-heading"><span class="section-num">07</span>Mon regard critique</h2>
+            <div class="critique-grid">
+              @for (point of project!.rich!.critique; track point.title) {
+                <article class="critique-card" [class.is-takeaway]="point.type === 'takeaway'">
+                  <div class="critique-card-label">
+                    {{ point.type === 'takeaway' ? 'Acquis' : 'Leçon' }}
+                  </div>
+                  <h3 class="critique-card-title">{{ point.title }}</h3>
+                  <p class="critique-card-body">{{ point.body }}</p>
+                </article>
+              }
+            </div>
+          </section>
+
+          <!-- 08. COMPÉTENCES ASSOCIÉES -->
+          @if (project!.relatedSkills?.length) {
+            <section>
+              <h2 class="section-heading"><span class="section-num">08</span>Compétences associées</h2>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                @for (skillId of project!.relatedSkills!; track skillId) {
+                  <a [routerLink]="['/skills', skillId]" class="skill-link">
+                    @if (getSkillLogo(skillId)) {
+                      <img [src]="getSkillLogo(skillId)" [alt]="getSkillName(skillId)" class="w-6 h-6 object-contain" />
+                    }
+                    <span>{{ getSkillName(skillId) }}</span>
+                    <span aria-hidden="true" class="ml-auto text-muted-foreground transition-transform">→</span>
+                  </a>
+                }
+              </div>
+            </section>
+          }
+
+        </article>
+      } @else {
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- V1 LAYOUT (legacy, projets pas encore migrés)        -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <!-- Header -->
+        <div class="glass-card hover-lift mb-12 p-6 md:p-8">
+          <div class="flex items-start justify-between gap-6 mb-4 flex-wrap">
+            <div class="flex items-center gap-4">
+              @if (project!.logo) {
+                <div class="inline-flex p-3 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl hover-lift">
+                  <img [src]="project!.logo" [alt]="project!.title" class="w-12 h-12 object-contain transition-transform duration-300" />
+                </div>
+              }
+              <h1 class="m-0 gradient-text">{{ project!.title }}</h1>
+            </div>
+            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold
+                         bg-gradient-to-r from-primary/10 to-accent/10
+                         border-2 border-transparent bg-clip-padding
+                         relative before:absolute before:inset-0 before:rounded-full before:p-[2px]
+                         before:bg-gradient-to-r before:from-primary before:to-accent before:-z-10">
+              {{ project!.year }}
+            </span>
+          </div>
+          <p class="text-xl text-muted-foreground mb-6 leading-relaxed">{{ project!.description }}</p>
+          <div class="flex flex-wrap gap-2">
+            @for (tag of tags(project!); track tag) {
+              <span class="inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium
+                            bg-accent/10 text-accent border-accent/20
+                            transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-accent/20">
+                {{ tag }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Présentation -->
+        <div class="glass-card hover-lift mb-6">
+          <div class="p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="inline-flex p-2 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl">
+                <lucide-icon name="layers" class="h-6 w-6 text-primary" aria-hidden="true"></lucide-icon>
+              </div>
+              <h2 class="text-2xl font-bold gradient-text-subtle m-0">Présentation du projet</h2>
+            </div>
+            <p class="text-lg text-muted-foreground leading-relaxed">{{ project!.presentation }}</p>
+          </div>
+        </div>
+
+        <!-- Objectifs / Contexte / Enjeux / Risques -->
+        <div class="glass-card hover-lift mb-6">
+          <div class="p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="inline-flex p-2 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl">
+                <lucide-icon name="target" class="h-6 w-6 text-primary" aria-hidden="true"></lucide-icon>
+              </div>
+              <h2 class="text-2xl font-bold gradient-text-subtle m-0">Objectifs &amp; Contexte</h2>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="glass-card p-4 bg-secondary/30 border-l-4 border-primary">
+                <h4 class="font-semibold mb-2 text-foreground">Contexte</h4>
+                <p class="text-muted-foreground text-sm leading-relaxed">{{ project!.objectives.context }}</p>
+              </div>
+              <div class="glass-card p-4 bg-secondary/30 border-l-4 border-accent">
+                <h4 class="font-semibold mb-2 text-foreground">Objectifs</h4>
+                <p class="text-muted-foreground text-sm leading-relaxed">{{ project!.objectives.goals }}</p>
+              </div>
+              <div class="glass-card p-4 bg-secondary/30 border-l-4 border-primary">
+                <h4 class="font-semibold mb-2 text-foreground">Enjeux &amp; Défis</h4>
+                <p class="text-muted-foreground text-sm leading-relaxed">{{ project!.objectives.challenges }}</p>
+              </div>
+              <div class="glass-card p-4 bg-secondary/30 border-l-4 border-accent">
+                <h4 class="font-semibold mb-2 text-foreground">Risques identifiés</h4>
+                <p class="text-muted-foreground text-sm leading-relaxed">{{ project!.objectives.risks }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Étapes -->
+        <div class="glass-card hover-lift mb-6">
+          <div class="p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="inline-flex p-2 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl">
+                <lucide-icon name="list-checks" class="h-6 w-6 text-primary" aria-hidden="true"></lucide-icon>
+              </div>
+              <h2 class="text-2xl font-bold gradient-text-subtle m-0">Ce que j'ai fait. Étapes clés</h2>
+            </div>
+            <div class="space-y-3">
+              @for (step of project!.steps; track step) {
+                <div class="flex gap-4 items-start p-3 rounded-lg bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full
+                               bg-gradient-to-br from-primary to-accent text-white text-sm font-bold flex-shrink-0">
+                    {{ $index + 1 }}
+                  </span>
+                  <span class="text-muted-foreground leading-relaxed pt-1">{{ step }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Réalisations majeures -->
+        @if (project!.majorTasks?.length) {
+          <div class="glass-card hover-lift mb-6">
+            <div class="p-6 md:p-8">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="inline-flex p-2 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl">
+                  <lucide-icon name="zap" class="h-6 w-6 text-primary" aria-hidden="true"></lucide-icon>
+                </div>
+                <h2 class="text-2xl font-bold gradient-text-subtle m-0">Réalisations majeures</h2>
+              </div>
+
+              <div class="space-y-10">
+                @for (task of project!.majorTasks; track task.title) {
+                  <div class="border-l-4 border-gradient pl-6 relative">
+                    <div class="absolute -left-3 top-0 w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent
+                                flex items-center justify-center shadow-lg">
+                      <span class="text-white text-xs font-bold">{{ $index + 1 }}</span>
+                    </div>
+
+                    <h3 class="text-xl font-bold mb-4 text-foreground">{{ task.title }}</h3>
+
+                    <div class="glass-card p-4 bg-secondary/30 mb-4">
+                      <h4 class="font-semibold mb-2 text-foreground">Contexte &amp; Objectif</h4>
+                      <p class="text-muted-foreground text-sm leading-relaxed">{{ task.context }}</p>
+                    </div>
+
+                    <h4 class="font-semibold mb-3 text-foreground">Étapes techniques</h4>
+                    <ul class="space-y-2 mb-4 ml-4">
+                      @for (step of task.steps; track step) {
+                        <li class="text-muted-foreground text-sm flex gap-2 items-start">
+                          <span class="text-primary font-bold mt-1">→</span>
+                          <span class="leading-relaxed">{{ step }}</span>
+                        </li>
+                      }
+                    </ul>
+
+                    <div class="glass-card p-4 bg-gradient-to-r from-primary/5 to-accent/5 mb-4">
+                      <h4 class="font-semibold mb-2 text-foreground">Résultat &amp; Impact</h4>
+                      <p class="text-muted-foreground text-sm leading-relaxed">{{ task.result }}</p>
+                    </div>
+
+                    @if (task.learning) {
+                      <div class="glass-card p-4 bg-accent/10 border-l-4 border-accent">
+                        <h4 class="font-semibold mb-2 text-foreground">Apprentissage clé</h4>
+                        <p class="text-muted-foreground text-sm leading-relaxed italic">{{ task.learning }}</p>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Acteurs -->
+        <div class="glass-card hover-lift mb-6">
+          <div class="p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="inline-flex p-2 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl">
+                <lucide-icon name="users" class="h-6 w-6 text-primary" aria-hidden="true"></lucide-icon>
+              </div>
+              <h2 class="text-2xl font-bold gradient-text-subtle m-0">Acteurs &amp; Interactions</h2>
+            </div>
+            <p class="text-lg text-muted-foreground leading-relaxed">{{ project!.actors }}</p>
+          </div>
+        </div>
+
+        <!-- Résultats -->
+        <div class="glass-card hover-lift mb-6">
+          <div class="p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="inline-flex p-2 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl">
+                <lucide-icon name="trending-up" class="h-6 w-6 text-primary" aria-hidden="true"></lucide-icon>
+              </div>
+              <h2 class="text-2xl font-bold gradient-text-subtle m-0">Résultats</h2>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="glass-card p-5 bg-gradient-to-br from-primary/5 to-transparent border-l-4 border-primary">
+                <h4 class="font-semibold mb-3 text-foreground">Apports personnels</h4>
+                <p class="text-muted-foreground text-sm leading-relaxed">{{ project!.results.personal }}</p>
+              </div>
+              <div class="glass-card p-5 bg-gradient-to-br from-accent/5 to-transparent border-l-4 border-accent">
+                <h4 class="font-semibold mb-3 text-foreground">Impact pour l'entreprise</h4>
+                <p class="text-muted-foreground text-sm leading-relaxed">{{ project!.results.business }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lendemains -->
+        <div class="glass-card hover-lift mb-6">
+          <div class="p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="inline-flex p-2 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl">
+                <lucide-icon name="rocket" class="h-6 w-6 text-primary" aria-hidden="true"></lucide-icon>
+              </div>
+              <h2 class="text-2xl font-bold gradient-text-subtle m-0">Les lendemains du projet</h2>
+            </div>
+            <p class="text-lg text-muted-foreground leading-relaxed">{{ project!.future }}</p>
+          </div>
+        </div>
+
+        <!-- Regard critique -->
+        <div class="glass-card hover-lift mb-6 border-l-4 border-accent">
+          <div class="p-6 md:p-8 bg-gradient-to-r from-accent/5 to-transparent">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="inline-flex p-2 bg-gradient-to-br from-accent/20 to-primary/20 rounded-xl">
+                <lucide-icon name="eye" class="h-6 w-6 text-accent" aria-hidden="true"></lucide-icon>
+              </div>
+              <h2 class="text-2xl font-bold gradient-text-subtle m-0">Regard critique</h2>
+            </div>
+            <p class="text-lg text-muted-foreground leading-relaxed">{{ project!.critique }}</p>
+          </div>
+        </div>
+
+        <!-- Compétences associées -->
+        @if (project!.relatedSkills?.length) {
+          <div class="glass-card hover-lift">
+            <div class="p-6 md:p-8">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="inline-flex p-2 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl">
+                  <lucide-icon name="brain" class="h-6 w-6 text-primary" aria-hidden="true"></lucide-icon>
+                </div>
+                <h2 class="text-2xl font-bold gradient-text-subtle m-0">Compétences mobilisées</h2>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                @for (skillId of project!.relatedSkills!; track skillId) {
+                  <a [routerLink]="['/skills', skillId]"
+                     class="glass-card inline-flex items-center gap-3 p-4 rounded-xl border hover:bg-primary/10
+                            cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg
+                            hover:shadow-primary/20 group">
+                    @if (getSkillLogo(skillId)) {
+                      <img [src]="getSkillLogo(skillId)" [alt]="getSkillName(skillId)"
+                           class="w-6 h-6 object-contain transition-transform duration-300 group-hover:rotate-12" />
+                    }
+                    <span class="font-medium">{{ getSkillName(skillId) }}</span>
+                  </a>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </section>
+</main>

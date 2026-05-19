@@ -1,0 +1,120 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// Couleur d'accent de la carte : technique = primary (bleu), humaine = accent.
+.skill-card-link {
+  --skill-accent: var(--primary);
+
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 1rem;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.is-human {
+    --skill-accent: var(--accent);
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, hsl(var(--skill-accent)) 30%, hsl(var(--border)));
+
+    .banner-grid { opacity: 0.6; }
+
+    .cta-arrow { transform: translateX(3px); }
+  }
+}
+
+// Bannière du haut : teinte douce + grille discrète masquée en radial
+.banner {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.banner-tint {
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in oklab, hsl(var(--skill-accent)) 14%, transparent),
+    color-mix(in oklab, hsl(var(--skill-accent)) 4%, transparent)
+  );
+}
+
+.banner-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, hsl(var(--foreground)) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, hsl(var(--foreground)) 6%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 70% 80% at 50% 50%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 50% 50%, black 30%, transparent 80%);
+  transition: opacity 0.4s ease;
+}
+
+// Tuile blanche autour du logo / icône
+.logo-tile {
+  border: 1px solid hsl(var(--border));
+}
+
+.skill-icon {
+  color: hsl(var(--skill-accent));
+}
+
+// Badge de catégorie
+.category-badge {
+  color: hsl(var(--skill-accent));
+  border-color: color-mix(in oklab, hsl(var(--skill-accent)) 25%, hsl(var(--border)));
+}
+
+// Bloc niveau : note chiffrée précise (comparable d'une compétence à l'autre)
+.level-score {
+  font-size: 1.6rem;
+  color: hsl(var(--skill-accent));
+}
+
+.level-score-max {
+  font-size: 0.9rem;
+}
+
+.level-track {
+  height: 0.375rem;
+  background: hsl(var(--secondary));
+}
+
+.level-fill {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--skill-accent)),
+    color-mix(in oklab, hsl(var(--skill-accent)) 55%, hsl(var(--accent)))
+  );
+}
+
+// Appel à l'action
+.cta {
+  color: hsl(var(--skill-accent));
+}
+
+// Survol adouci sur mobile
+@media (max-width: 768px) {
+  .skill-card-link:hover {
+    transform: translateY(-3px);
+  }
+}
+
+// Respect de prefers-reduced-motion
+@media (prefers-reduced-motion: reduce) {
+  .skill-card-link,
+  .logo-tile,
+  .banner-grid,
+  .cta-arrow,
+  .level-fill {
+    transition: none;
+  }
+
+  .skill-card-link:hover {
+    transform: none;
+  }
+
+  .skill-card-link:hover .cta-arrow {
+    transform: none;
+  }
+}

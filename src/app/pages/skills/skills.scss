@@ -1,0 +1,101 @@
+// Page Compétences
+
+section {
+  position: relative;
+  overflow: hidden;
+}
+
+// Filtre : segmented control
+.segmented {
+  gap: 0.25rem;
+}
+
+.segment {
+  border: none;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+
+  &:hover {
+    color: hsl(var(--foreground));
+  }
+
+  &.is-active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 4px 14px color-mix(in oklab, hsl(var(--primary)) 30%, transparent);
+
+    .segment-count {
+      background: color-mix(in oklab, hsl(var(--primary-foreground)) 22%, transparent);
+      color: hsl(var(--primary-foreground));
+    }
+  }
+}
+
+.segment-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  margin-left: 0.4rem;
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
+  line-height: 1.2rem;
+  border-radius: 9999px;
+  background: hsl(var(--secondary));
+  color: hsl(var(--muted-foreground));
+  transition: all 0.3s ease;
+}
+
+// Animation d'entrée de la grille
+.grid {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Apparition en cascade des cartes
+app-skill-card {
+  animation: fadeIn 0.5s ease-out backwards;
+
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.08}s;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+// Respect de prefers-reduced-motion
+@media (prefers-reduced-motion: reduce) {
+  .grid,
+  app-skill-card,
+  .segment,
+  .segment-count {
+    animation: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,75 @@
+<main>
+  <!-- Hero -->
+  <section class="section-padding-sm relative bg-gradient-to-b from-background to-secondary/30">
+    <!-- Décor de fond -->
+    <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+      <div class="absolute -top-20 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+      <div class="absolute top-40 -right-32 w-[28rem] h-[28rem] bg-accent/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="container-custom">
+      <div class="max-w-4xl mx-auto text-center mb-12">
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase bg-primary/10 text-primary border border-primary/20 mb-6">
+          <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+          {{ total() }} compétences · {{ techCount() }} techniques · {{ humanCount() }} humaines
+        </span>
+        <h1 class="gradient-text text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+          Compétences
+        </h1>
+        <p class="text-xl md:text-2xl text-muted-foreground leading-relaxed">
+          Un aperçu de mes compétences techniques et humaines, développées au fil de mes expériences professionnelles.
+        </p>
+      </div>
+
+      <!-- Filtre : segmented control -->
+      <div class="flex justify-center">
+        <div class="segmented glass-card inline-flex p-1.5 rounded-full" role="tablist" aria-label="Filtrer les compétences">
+          <button
+            type="button"
+            role="tab"
+            class="segment px-5 py-2.5 rounded-full cursor-pointer transition-all font-semibold text-sm"
+            [class.is-active]="filter() === 'all'"
+            [attr.aria-selected]="filter() === 'all'"
+            (click)="setFilter('all')">
+            Toutes <span class="segment-count">{{ total() }}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="segment px-5 py-2.5 rounded-full cursor-pointer transition-all font-semibold text-sm"
+            [class.is-active]="filter() === 'tech'"
+            [attr.aria-selected]="filter() === 'tech'"
+            (click)="setFilter('tech')">
+            Techniques <span class="segment-count">{{ techCount() }}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="segment px-5 py-2.5 rounded-full cursor-pointer transition-all font-semibold text-sm"
+            [class.is-active]="filter() === 'human'"
+            [attr.aria-selected]="filter() === 'human'"
+            (click)="setFilter('human')">
+            Humaines <span class="segment-count">{{ humanCount() }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grille des compétences -->
+  <section class="section-padding-sm">
+    <div class="container-custom">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
+        @for (s of filtered(); track s.id) {
+          <app-skill-card [id]="s.id" [name]="s.name" [category]="s.category" [level]="s.level" [summary]="s.summary" [logo]="s.logo" [icon]="s.icon" />
+        }
+      </div>
+
+      <!-- Légende -->
+      <p class="mt-12 flex items-center justify-center gap-2 text-sm text-muted-foreground text-center">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></span>
+        Note de maîtrise sur 10 indiquée sur chaque compétence. Cliquez sur l'une d'elles pour sa fiche détaillée : définition, preuves concrètes, autocritique et évolution.
+      </p>
+    </div>
+  </section>
+</main>

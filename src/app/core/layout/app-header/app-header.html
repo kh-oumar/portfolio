@@ -1,0 +1,55 @@
+<header class="sticky top-0 z-50 w-full bg-card/95 backdrop-blur border-b border-border shadow-sm">
+  <nav class="container-custom" aria-label="Navigation principale">
+    <div class="flex h-16 items-center justify-between">
+      <a routerLink="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <img src="assets/profile-photo.jpg" alt="Photo de profil"
+             class="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10" />
+        <div>
+          <p class="text-sm font-semibold text-foreground">Oumar Khousainov</p>
+          <p class="text-xs text-muted-foreground">Développeur Web</p>
+        </div>
+      </a>
+
+      <div class="hidden md:flex md:gap-1">
+        @for (item of nav; track item.href) {
+          <a [routerLink]="item.href"
+             routerLinkActive
+             #rla="routerLinkActive"
+             [routerLinkActiveOptions]="{ exact: item.href === '/' }"
+             [ngClass]="{
+               'bg-primary text-primary-foreground': rla.isActive,
+               'hover:bg-secondary hover:text-secondary-foreground': !rla.isActive
+             }"
+             class="px-4 py-2 text-sm font-medium rounded-md transition-colors text-foreground">
+            {{ item.name }}
+          </a>
+        }
+      </div>
+
+      <button type="button" class="md:hidden p-2 rounded-md text-foreground hover:bg-secondary"
+              (click)="mobileOpen = !mobileOpen" [attr.aria-expanded]="mobileOpen" aria-label="Menu de navigation">
+        <lucide-icon [img]="mobileOpen ? X : Menu" class="h-6 w-6"></lucide-icon>
+      </button>
+    </div>
+
+    @if (mobileOpen) {
+      <div class="md:hidden py-4 border-t border-border">
+        <div class="flex flex-col gap-2">
+          @for (item of nav; track item.href) {
+            <a [routerLink]="item.href"
+               (click)="mobileOpen = false"
+               routerLinkActive
+               #rlaMobile="routerLinkActive"
+               [ngClass]="{
+                 'bg-primary text-primary-foreground': rlaMobile.isActive,
+                 'hover:bg-secondary hover:text-secondary-foreground': !rlaMobile.isActive
+               }"
+               class="px-4 py-2 text-sm font-medium rounded-md transition-colors text-foreground">
+              {{ item.name }}
+            </a>
+          }
+        </div>
+      </div>
+    }
+  </nav>
+</header>

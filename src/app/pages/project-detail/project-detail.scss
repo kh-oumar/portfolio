@@ -1,0 +1,670 @@
+// Animations d'entrée
+main {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Stagger des sections
+.glass-card {
+  animation: fadeIn 0.5s ease-out backwards;
+
+  &:nth-child(1) { animation-delay: 0.08s; }
+  &:nth-child(2) { animation-delay: 0.16s; }
+  &:nth-child(3) { animation-delay: 0.24s; }
+  &:nth-child(4) { animation-delay: 0.32s; }
+  &:nth-child(5) { animation-delay: 0.40s; }
+  &:nth-child(6) { animation-delay: 0.48s; }
+  &:nth-child(7) { animation-delay: 0.56s; }
+  &:nth-child(8) { animation-delay: 0.64s; }
+  &:nth-child(9) { animation-delay: 0.72s; }
+  &:nth-child(10) { animation-delay: 0.80s; }
+  &:nth-child(11) { animation-delay: 0.88s; }
+  &:nth-child(12) { animation-delay: 0.96s; }
+}
+
+// Hover lift amélioré
+.glass-card.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.12),
+      0 0 30px hsl(var(--primary) / 0.08);
+  }
+}
+
+// Bordure gauche animée avec gradient
+.border-gradient {
+  position: relative;
+  border-left: 4px solid transparent;
+  background: linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--accent))) left / 4px 100% no-repeat;
+  background-clip: border-box;
+}
+
+// Puce numérotée avec pulse
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+  }
+}
+
+.border-l-4 .absolute.-left-3 {
+  animation: pulse 2s infinite;
+}
+
+// Tags hover scale
+span[class*="rounded-full"] {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+// Logo rotation et scale
+.inline-flex img {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: rotate(5deg) scale(1.1);
+  }
+}
+
+// Gradient text
+.gradient-text {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-subtle {
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--accent) / 0.9));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Transitions pour les sections
+.glass-card > div {
+  transition: all 0.3s ease;
+}
+
+// Hover sur les étapes
+.space-y-3 > div {
+  transition: all 0.3s ease;
+}
+
+// Hover sur les cartes de compétences
+a[class*="glass-card"] {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.1),
+      0 0 20px hsl(var(--primary) / 0.2);
+  }
+
+  img {
+    transition: transform 0.3s ease;
+  }
+
+  &:hover img {
+    transform: rotate(12deg);
+  }
+}
+
+// Animations pour les réalisations majeures
+.border-l-4 {
+  transition: all 0.3s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 0;
+    width: 4px;
+    height: 0;
+    background: linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--accent)));
+    transition: height 0.6s ease-out;
+  }
+
+  &:hover::before {
+    height: 100%;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .glass-card {
+    padding: 1.5rem !important;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  // Réduire l'espacement sur mobile
+  .space-y-10 > * + * {
+    margin-top: 2rem !important;
+  }
+
+  // Réduire le padding des sous-cartes
+  .glass-card .glass-card {
+    padding: 1rem !important;
+  }
+}
+
+// Amélioration des transitions pour les bordures
+.border-l-4 {
+  border-image: linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--accent))) 1;
+}
+
+// Hover sur les sous-sections d'objectifs
+.grid > .glass-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateX(4px);
+    box-shadow: -4px 0 12px hsl(var(--primary) / 0.1);
+  }
+}
+
+// Animation pour les listes à puces dans les réalisations
+ul li {
+  animation: slideInLeft 0.4s ease-out backwards;
+
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Amélioration du focus pour l'accessibilité
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+// Hover sur les cartes de résultats
+.grid.md\\:grid-cols-2 > .glass-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   V2 LAYOUT. Design plus posé, sections numérotées,
+   cartes neutres, regard critique mis en valeur
+   ════════════════════════════════════════════════════════════ */
+
+.rich-header {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 40% at 100% 0%,
+                                color-mix(in oklab, hsl(var(--primary)) 8%, transparent),
+                                transparent 70%);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+
+  @media (min-width: 768px) {
+    font-size: 2rem;
+  }
+}
+
+.section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: hsl(var(--primary));
+  background: color-mix(in oklab, hsl(var(--primary)) 8%, transparent);
+  border: 1px solid color-mix(in oklab, hsl(var(--primary)) 25%, transparent);
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.prose-zone {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: hsl(var(--muted-foreground));
+
+  p { margin: 0; }
+}
+
+.info-block {
+  background: color-mix(in oklab, hsl(var(--secondary)) 30%, transparent);
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+
+  h4.results-subheading {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    margin: 0 0 0.625rem 0;
+    letter-spacing: 0.01em;
+  }
+
+  ul { list-style: none; padding: 0; margin: 0; }
+}
+
+.info-block-primary {
+  background: color-mix(in oklab, hsl(var(--primary)) 4%, hsl(var(--card)));
+  border-color: color-mix(in oklab, hsl(var(--primary)) 20%, hsl(var(--border)));
+}
+
+.info-block-accent {
+  background: color-mix(in oklab, hsl(var(--accent)) 4%, hsl(var(--card)));
+  border-color: color-mix(in oklab, hsl(var(--accent)) 20%, hsl(var(--border)));
+}
+
+.info-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: hsl(var(--muted-foreground));
+  margin: 0 0 0.875rem 0;
+}
+
+.info-bullet {
+  position: relative;
+  padding-left: 1.125rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: hsl(var(--muted-foreground));
+  list-style: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: hsl(var(--primary));
+  }
+}
+
+.info-block-accent .info-bullet::before { background: hsl(var(--accent)); }
+
+.context-row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  font-size: 0.9375rem;
+  margin: 0;
+
+  dt {
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    margin: 0;
+    text-transform: uppercase;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+  }
+  dd {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.5;
+  }
+}
+
+.team-card,
+.actor-card,
+.aftermath-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.875rem;
+  padding: 1rem 1.25rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    border-color: color-mix(in oklab, hsl(var(--primary)) 30%, hsl(var(--border)));
+  }
+
+  ul { list-style: none; padding: 0; }
+}
+
+.aftermath-card:hover {
+  transform: translateY(-2px);
+}
+
+.aftermath-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: hsl(var(--primary));
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid color-mix(in oklab, hsl(var(--primary)) 20%, transparent);
+}
+
+.step-card {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 1.25rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: color-mix(in oklab, hsl(var(--primary)) 25%, hsl(var(--border)));
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  ul { list-style: none; padding: 0; margin: 0; }
+}
+
+.step-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: color-mix(in oklab, hsl(var(--primary)) 70%, transparent);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-body {
+  min-width: 0;
+}
+
+.results-conclusion {
+  margin: 1.25rem 0 0 0;
+  padding-top: 1rem;
+  border-top: 1px dashed color-mix(in oklab, hsl(var(--border)) 100%, transparent);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  font-style: italic;
+  color: hsl(var(--foreground));
+}
+
+/* ──────────────────────────────────────────────────────────
+   Regard critique. Points structurés en cartes
+   ────────────────────────────────────────────────────────── */
+.critique-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.critique-card {
+  position: relative;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: border-color 0.25s ease, transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+
+  &:hover {
+    border-color: color-mix(in oklab, hsl(var(--primary)) 35%, hsl(var(--border)));
+    transform: translateY(-2px);
+  }
+
+  /* Variante takeaway : teinté primary */
+  &.is-takeaway {
+    background: color-mix(in oklab, hsl(var(--primary)) 5%, hsl(var(--card)));
+    border-color: color-mix(in oklab, hsl(var(--primary)) 30%, hsl(var(--border)));
+
+    .critique-card-label {
+      background: color-mix(in oklab, hsl(var(--primary)) 12%, transparent);
+      color: hsl(var(--primary));
+      border-color: color-mix(in oklab, hsl(var(--primary)) 35%, transparent);
+    }
+
+    .critique-card-title {
+      color: hsl(var(--primary));
+    }
+  }
+}
+
+.critique-card-label {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: hsl(var(--muted-foreground));
+  background: color-mix(in oklab, hsl(var(--muted-foreground)) 8%, transparent);
+  border: 1px solid color-mix(in oklab, hsl(var(--muted-foreground)) 18%, transparent);
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
+}
+
+.critique-card-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: hsl(var(--foreground));
+  margin: 0;
+  letter-spacing: -0.01em;
+
+  @media (min-width: 768px) {
+    font-size: 1.125rem;
+  }
+}
+
+.critique-card-body {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}
+
+.skill-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  font-weight: 500;
+  color: inherit;
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: color-mix(in oklab, hsl(var(--primary)) 30%, hsl(var(--border)));
+    background: color-mix(in oklab, hsl(var(--primary)) 5%, hsl(var(--card)));
+
+    span[aria-hidden] { transform: translateX(3px); }
+  }
+}
+
+// V2 → désactive l'animation slideInLeft globale (trop bruyante)
+.rich-header ~ section ul li,
+article > section ul li {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-card, .team-card, .actor-card, .aftermath-card, .skill-link {
+    transition: none;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Tagline éditoriale sous le H1 (FollowDeen, autres si défini)
+   ────────────────────────────────────────────────────────── */
+.rich-tagline {
+  margin: 0.875rem 0 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: hsl(var(--primary));
+  letter-spacing: -0.01em;
+
+  @media (min-width: 768px) {
+    font-size: 1.375rem;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Bandeau de chiffres-clés (KPI band)
+   ────────────────────────────────────────────────────────── */
+.metrics-band {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  background: hsl(var(--border));
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.metric-cell {
+  background: hsl(var(--card));
+  padding: 1.25rem 1rem;
+  text-align: center;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: color-mix(in oklab, hsl(var(--primary)) 4%, hsl(var(--card)));
+  }
+}
+
+.metric-value {
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 1;
+  color: hsl(var(--primary));
+  font-variant-numeric: tabular-nums;
+
+  @media (min-width: 768px) {
+    font-size: 2.25rem;
+  }
+}
+
+.metric-label {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ──────────────────────────────────────────────────────────
+   Thèmes d'accent par projet. Overrides locaux des
+   variables --primary / --accent à l'intérieur de l'article.
+   Tout le SCSS v2 utilise déjà hsl(var(--primary)) /
+   hsl(var(--accent)), donc ces overrides repeignent
+   automatiquement la page sans toucher au reste.
+   ────────────────────────────────────────────────────────── */
+
+article.theme-emerald {
+  // FollowDeen. Confiance financière, escrow
+  --primary: 160 84% 32%;   // emerald 700
+  --accent: 173 75% 38%;    // teal 600
+}
+
+article.theme-amber {
+  // Réservé pour un futur projet
+  --primary: 32 95% 44%;    // amber 600
+  --accent: 14 90% 53%;     // orange 600
+}
+
+article.theme-sky {
+  // MacWay. E-commerce / Apple, bleu clair
+  --primary: 200 95% 42%;   // sky 600
+  --accent: 199 89% 56%;    // sky 500
+}
+
+article.theme-gold {
+  // WeDriv. VTC, jaune classique
+  --primary: 45 93% 47%;    // yellow 500. Jaune classique
+  --accent: 48 96% 56%;     // yellow 400. Accent plus lumineux
+}
+
+article.theme-violet {
+  // Réservé pour un futur projet (e.g. WeDriv VTC)
+  --primary: 262 83% 58%;
+  --accent: 280 75% 55%;
+}

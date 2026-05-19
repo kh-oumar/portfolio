@@ -1,0 +1,50 @@
+<div class="project-card-link group glass-card hover-lift relative flex flex-col h-full overflow-hidden">
+
+  <!-- Bannière avec logo en proéminence -->
+  <div class="banner relative aspect-[16/9] flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-secondary/40 to-secondary/10"></div>
+    <div class="absolute inset-0 banner-grid opacity-40"></div>
+
+    <span class="absolute top-3 right-3 z-20 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-card/90 text-secondary-foreground border border-border backdrop-blur-sm">
+      {{ year }}
+    </span>
+
+    @if (logo) {
+      <div class="logo-tile relative z-10 pointer-events-none w-24 h-24 md:w-28 md:h-28 flex items-center justify-center bg-card rounded-2xl shadow-sm p-2 overflow-hidden transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
+        <img [src]="logo" [alt]="title" class="w-full h-full object-contain" />
+      </div>
+    } @else {
+      <div class="logo-tile relative z-10 pointer-events-none w-20 h-20 md:w-24 md:h-24 flex items-center justify-center bg-card rounded-2xl shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
+        <span class="text-3xl font-bold gradient-text-subtle">{{ title.charAt(0) }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Corps -->
+  <div class="relative z-10 p-6 md:p-7 flex flex-col flex-1 pointer-events-none">
+    <h3 class="text-xl md:text-2xl font-semibold m-0 mb-2 transition-colors group-hover:text-primary">
+      {{ title }}
+    </h3>
+
+    <p class="text-base text-muted-foreground leading-relaxed mb-5 line-clamp-3">
+      {{ description }}
+    </p>
+
+    <div class="flex flex-wrap gap-2 mt-auto">
+      @for (t of visibleTags(); track t) {
+        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium
+                     bg-primary/5 text-primary border-primary/15">{{ t }}</span>
+      }
+      @if (hiddenTagCount() > 0) {
+        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium
+                     bg-secondary text-secondary-foreground border-border" [attr.title]="hiddenTagsTitle()">
+          +{{ hiddenTagCount() }}
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- Lien étiré : toute la carte mène vers la page de détail -->
+  <a [routerLink]="['/projects', id]" [attr.aria-label]="title"
+     class="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"></a>
+</div>

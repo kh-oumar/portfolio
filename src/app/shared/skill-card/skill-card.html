@@ -1,0 +1,60 @@
+<a [routerLink]="['/skills', id]"
+   class="skill-card-link group glass-card hover-lift flex flex-col h-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+   [class.is-human]="isHuman">
+
+  <!-- En-tête : dégradé + grille discrète + tuile logo proéminente -->
+  <div class="banner relative aspect-[16/7] flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0 banner-tint"></div>
+    <div class="absolute inset-0 banner-grid opacity-40"></div>
+
+    <span class="category-badge absolute top-3 right-3 z-20 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-card/90 border backdrop-blur-sm">
+      {{ categoryLabel }}
+    </span>
+
+    <div class="logo-tile relative z-10 w-20 h-20 md:w-24 md:h-24 flex items-center justify-center bg-card rounded-2xl shadow-sm p-3 overflow-hidden transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
+      @if (logo) {
+        <img [src]="logo" [alt]="name" class="w-full h-full object-contain" />
+      } @else if (icon) {
+        <lucide-icon [name]="icon" class="skill-icon h-9 w-9" aria-hidden="true"></lucide-icon>
+      } @else {
+        <span class="text-3xl font-bold gradient-text-subtle">{{ name.charAt(0) }}</span>
+      }
+    </div>
+  </div>
+
+  <!-- Corps -->
+  <div class="p-6 flex flex-col flex-1">
+    <h3 class="text-lg md:text-xl font-semibold m-0 mb-2 transition-colors group-hover:text-primary">
+      {{ name }}
+    </h3>
+
+    <p class="text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-2">
+      {{ summary }}
+    </p>
+
+    <!-- Pied : niveau précis + appel à l'action -->
+    <div class="mt-auto">
+      <div class="flex items-end justify-between mb-2">
+        <div class="flex flex-col">
+          <span class="text-[11px] font-medium tracking-wide uppercase text-muted-foreground">Niveau de maîtrise</span>
+          <span class="level-score font-bold leading-none">
+            {{ level }}<span class="level-score-max text-muted-foreground font-semibold">/10</span>
+          </span>
+        </div>
+        <span class="cta inline-flex items-center gap-1 text-xs font-semibold pb-0.5">
+          Voir la fiche
+          <lucide-icon name="arrow-right" class="cta-arrow h-3.5 w-3.5 transition-transform" aria-hidden="true"></lucide-icon>
+        </span>
+      </div>
+      <div class="level-track w-full rounded-full overflow-hidden"
+           role="progressbar"
+           [attr.aria-valuenow]="level"
+           aria-valuemin="0"
+           aria-valuemax="10"
+           [attr.aria-label]="'Niveau ' + level + ' sur 10'">
+        <div class="level-fill h-full rounded-full transition-all duration-500"
+             [style.width.%]="level * 10"></div>
+      </div>
+    </div>
+  </div>
+</a>

@@ -1,0 +1,62 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// Toute la carte est cliquable. Supprime le soulignement et héritage
+.project-card-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 1rem;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, hsl(var(--primary)) 25%, hsl(var(--border)));
+
+    .banner-grid { opacity: 0.6; }
+  }
+}
+
+// Bannière du haut : gradient + halo lumineux + grille discrète
+.banner {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.banner-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, hsl(var(--foreground)) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, hsl(var(--foreground)) 6%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 70% 80% at 50% 50%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 50% 50%, black 30%, transparent 80%);
+  transition: opacity 0.4s ease;
+}
+
+// Tuile blanche autour du logo
+.logo-tile {
+  border: 1px solid hsl(var(--border));
+}
+
+// Animation d'entrée plus douce sur mobile
+@media (max-width: 768px) {
+  .project-card-link {
+    &:hover {
+      transform: translateY(-3px);
+    }
+  }
+}
+
+// Respect prefers-reduced-motion
+@media (prefers-reduced-motion: reduce) {
+  .project-card-link,
+  .logo-tile,
+  .banner-grid {
+    transition: none;
+  }
+
+  .project-card-link:hover {
+    transform: none;
+  }
+}

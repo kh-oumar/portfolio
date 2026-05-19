@@ -1,0 +1,31 @@
+<main>
+  <section class="section-padding-sm relative bg-gradient-to-b from-background to-secondary/30">
+    <!-- Décor de fond -->
+    <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+      <div class="absolute -top-20 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+      <div class="absolute top-40 -right-32 w-[28rem] h-[28rem] bg-accent/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="container-custom">
+      <div class="max-w-4xl mx-auto text-center mb-14">
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase bg-primary/10 text-primary border border-primary/20 mb-6">
+          <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+          {{ projects.length }} projets · {{ technologyCount }} technologies
+        </span>
+        <h1 class="gradient-text text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+          Réalisations
+        </h1>
+        <p class="text-xl md:text-2xl text-muted-foreground leading-relaxed">
+          Une sélection de projets significatifs illustrant mon expertise technique et ma capacité à conduire des projets innovants.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
+        @for (p of projects; track p.id) {
+          <app-project-card [id]="p.id" [title]="p.title" [description]="p.description"
+                            [tags]="p.tags" [year]="p.year" [logo]="p.logo" />
+        }
+      </div>
+    </div>
+  </section>
+</main>

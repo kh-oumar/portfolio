@@ -1,0 +1,526 @@
+<main>
+  <section class="section-padding">
+    <div class="container-custom max-w-4xl">
+      <!-- Bouton retour -->
+      <a routerLink="/skills" class="inline-flex items-center gap-2 px-4 py-2 rounded-md border mb-8 hover:bg-secondary transition-colors">
+        <lucide-icon name="arrow-left" class="h-4 w-4" aria-hidden="true"></lucide-icon>
+        Retour aux compétences
+      </a>
+
+      @if (!skill) {
+        <div class="text-center">
+          <h1 class="mb-4">Compétence non trouvée</h1>
+          <a routerLink="/skills" class="underline text-primary">Voir la liste</a>
+        </div>
+      } @else {
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- HEADER UNIQUE PAR COMPÉTENCE                               -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        @switch (id) {
+
+          @case ('symfony') {
+            <div class="mb-12 relative">
+              <div class="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 via-purple-400 to-purple-300 rounded-full hidden md:block"></div>
+              <div class="md:pl-8">
+                <div class="flex items-center gap-4 mb-4">
+                  @if (skill!.logo) {
+                    <img [src]="skill!.logo" [alt]="skill!.name" class="w-14 h-14 object-contain" />
+                  }
+                  <div>
+                    <h1 class="m-0">{{ skill!.name }}</h1>
+                    <span class="text-purple-400 text-sm font-medium">3 ans en production chez MacWay</span>
+                  </div>
+                  <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                        [ngClass]="badgeClass(skill!.category)">Technique</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="text-muted-foreground">Expertise</span>
+                  <div class="flex-1 max-w-xs">
+                    <div class="w-full bg-secondary rounded-full h-3">
+                      <div class="bg-purple-500 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                    </div>
+                  </div>
+                  <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+                </div>
+              </div>
+            </div>
+          }
+
+          @case ('angular') {
+            <div class="mb-12 border-2 border-red-500/20 rounded-2xl p-6 bg-gradient-to-br from-red-500/5 to-transparent">
+              <div class="flex items-center gap-4 mb-4">
+                @if (skill!.logo) { <img [src]="skill!.logo" [alt]="skill!.name" class="w-14 h-14 object-contain" /> }
+                <div>
+                  <div class="text-xs text-red-400 font-mono mb-1">&lt;app-portfolio /&gt;</div>
+                  <h1 class="m-0">{{ skill!.name }}</h1>
+                </div>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                      [ngClass]="badgeClass(skill!.category)">Technique</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-red-500 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+            </div>
+          }
+
+          @case ('react-nextjs') {
+            <div class="mb-12">
+              <div class="flex items-center gap-4 mb-4">
+                @if (skill!.logo) { <img [src]="skill!.logo" [alt]="skill!.name" class="w-14 h-14 object-contain animate-spin-slow" /> }
+                <div>
+                  <h1 class="m-0 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{{ skill!.name }}</h1>
+                  <span class="text-cyan-400 text-sm">VenaLabs · WeDriv</span>
+                </div>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                      [ngClass]="badgeClass(skill!.category)">Technique</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-cyan-500 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+            </div>
+          }
+
+          @case ('nextjs') {
+            <div class="mb-12 border border-slate-700/40 rounded-2xl p-6 bg-gradient-to-br from-slate-900/60 via-slate-800/30 to-transparent">
+              <div class="flex items-center gap-4 mb-4">
+                @if (skill!.logo) { <img [src]="skill!.logo" [alt]="skill!.name" class="w-14 h-14 object-contain" /> }
+                <div>
+                  <h1 class="m-0 bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">{{ skill!.name }}</h1>
+                </div>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                      [ngClass]="badgeClass(skill!.category)">Technique</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-gradient-to-r from-slate-300 to-slate-600 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+            </div>
+          }
+
+          @case ('spring-boot') {
+            <div class="mb-12 border rounded-2xl p-6 bg-gradient-to-br from-green-500/5 to-transparent">
+              <div class="flex items-center gap-4 mb-4">
+                @if (skill!.logo) { <img [src]="skill!.logo" [alt]="skill!.name" class="w-14 h-14 object-contain" /> }
+                <div>
+                  <h1 class="m-0 text-green-400">{{ skill!.name }}</h1>
+                </div>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                      [ngClass]="badgeClass(skill!.category)">Technique</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-green-500 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+            </div>
+          }
+
+          @case ('docker') {
+            <div class="mb-12 border border-sky-500/30 rounded-2xl p-6 bg-gradient-to-br from-sky-500/5 to-blue-500/5">
+              <div class="flex items-center gap-4 mb-4">
+                @if (skill!.logo) { <img [src]="skill!.logo" [alt]="skill!.name" class="w-14 h-14 object-contain" /> }
+                <div>
+                  <h1 class="m-0 bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent">{{ skill!.name }}</h1>
+                </div>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                      [ngClass]="badgeClass(skill!.category)">Technique</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-gradient-to-r from-sky-500 to-blue-500 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+            </div>
+          }
+
+          @case ('optimisation-ux') {
+            <div class="mb-12 border rounded-2xl p-6 bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-transparent">
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
+                  <lucide-icon name="sparkles" class="h-8 w-8 text-white" aria-hidden="true"></lucide-icon>
+                </div>
+                <div>
+                  <h1 class="m-0">{{ skill!.name }}</h1>
+                  <span class="text-pink-400 text-sm">Design + Performance = Impact</span>
+                </div>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                      [ngClass]="badgeClass(skill!.category)">Humaine</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-gradient-to-r from-pink-500 to-purple-500 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+            </div>
+          }
+
+          @case ('collaboration-agile') {
+            <div class="mb-12 border rounded-2xl p-6 bg-gradient-to-br from-teal-500/5 to-transparent">
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+                  <lucide-icon name="users" class="h-8 w-8 text-white" aria-hidden="true"></lucide-icon>
+                </div>
+                <div>
+                  <h1 class="m-0">{{ skill!.name }}</h1>
+                  <span class="text-teal-400 text-sm">Scrum, Communication & Partage</span>
+                </div>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                      [ngClass]="badgeClass(skill!.category)">Humaine</span>
+              </div>
+              <div class="flex items-center gap-4 mb-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-gradient-to-r from-teal-500 to-emerald-500 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="rounded-lg border bg-card p-2 text-center">
+                  <div class="text-xs font-medium text-teal-400 mb-1">Sprint</div>
+                  <div class="text-xs text-muted-foreground">2 semaines</div>
+                </div>
+                <div class="rounded-lg border bg-card p-2 text-center">
+                  <div class="text-xs font-medium text-emerald-400 mb-1">Daily</div>
+                  <div class="text-xs text-muted-foreground">15 min</div>
+                </div>
+                <div class="rounded-lg border bg-card p-2 text-center">
+                  <div class="text-xs font-medium text-green-400 mb-1">Retro</div>
+                  <div class="text-xs text-muted-foreground">Chaque sprint</div>
+                </div>
+              </div>
+            </div>
+          }
+
+          @case ('autonomie-resolution') {
+            <div class="mb-12 border rounded-2xl p-6 bg-gradient-to-br from-yellow-500/5 via-orange-500/5 to-transparent">
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
+                  <lucide-icon name="lightbulb" class="h-8 w-8 text-white" aria-hidden="true"></lucide-icon>
+                </div>
+                <div>
+                  <h1 class="m-0">{{ skill!.name }}</h1>
+                  <span class="text-orange-400 text-sm">Ma compétence la plus forte. 9/10</span>
+                </div>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                      [ngClass]="badgeClass(skill!.category)">Humaine</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-gradient-to-r from-yellow-500 to-orange-500 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+            </div>
+          }
+
+          @case ('vision-produit') {
+            <div class="mb-12 border rounded-2xl p-6 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5">
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+                  <lucide-icon name="telescope" class="h-8 w-8 text-white" aria-hidden="true"></lucide-icon>
+                </div>
+                <div>
+                  <h1 class="m-0">{{ skill!.name }}</h1>
+                  <span class="text-violet-400 text-sm">Du besoin utilisateur au modèle économique</span>
+                </div>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ml-auto"
+                      [ngClass]="badgeClass(skill!.category)">Humaine</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-gradient-to-r from-violet-500 to-fuchsia-500 h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+            </div>
+          }
+
+          @default {
+            <div class="mb-12">
+              <div class="flex items-start justify-between gap-4 mb-4">
+                <h1 class="m-0">{{ skill!.name }}</h1>
+                <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                      [ngClass]="badgeClass(skill!.category)">
+                  {{ skill!.category === 'tech' ? 'Technique' : 'Humaine' }}
+                </span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-muted-foreground">Expertise</span>
+                <div class="flex-1 max-w-xs">
+                  <div class="w-full bg-secondary rounded-full h-3">
+                    <div class="bg-primary h-3 rounded-full transition-all" [style.width.%]="skill!.level * 10"></div>
+                  </div>
+                </div>
+                <span class="font-semibold text-lg">{{ skill!.level }}/10</span>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- 1. DÉFINITION & CONTEXTE. Layout image + texte            -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <div class="border rounded-2xl bg-card mb-6 overflow-hidden">
+          <div class="p-6 md:p-8">
+            <div class="grid md:grid-cols-[180px_1fr] gap-6 items-start">
+
+              <!-- Visual gauche -->
+              <div class="flex flex-col items-center gap-3">
+                <div class="w-28 h-28 rounded-2xl flex items-center justify-center"
+                     [style.background]="'linear-gradient(135deg, ' + getAccentColor() + '20, ' + getAccentColor() + '05)'">
+                  @if (skill!.logo) {
+                    <img [src]="skill!.logo" [alt]="skill!.name" class="w-16 h-16 object-contain" />
+                  } @else if (skill!.icon) {
+                    <lucide-icon [name]="skill!.icon" class="h-12 w-12" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                  }
+                </div>
+                <div class="text-center">
+                  <div class="text-3xl font-bold" [style.color]="getAccentColor()">{{ skill!.level }}/10</div>
+                  <div class="text-xs text-muted-foreground mt-1">Niveau d'expertise</div>
+                </div>
+              </div>
+
+              <!-- Texte droite -->
+              <div class="space-y-4">
+                <div>
+                  <h2 class="text-xl font-semibold mb-2 flex items-center gap-2">
+                    <lucide-icon name="book-open" class="h-5 w-5" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                    Définition
+                  </h2>
+                  <p class="text-muted-foreground leading-relaxed">{{ skill!.definition }}</p>
+                </div>
+                <div>
+                  <h4 class="font-medium mb-1 text-foreground">Mon contexte</h4>
+                  <p class="text-muted-foreground leading-relaxed">{{ skill!.context }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actualité. Callout -->
+            <div class="mt-6 p-4 rounded-xl border-l-4"
+                 [style.borderLeftColor]="getAccentColor()"
+                 [style.background]="getAccentColor() + '08'">
+              <div class="flex items-center gap-2 mb-1">
+                <lucide-icon name="zap" class="h-4 w-4" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                <span class="text-sm font-semibold" [style.color]="getAccentColor()">Actualité & Tendances</span>
+              </div>
+              <p class="text-muted-foreground text-sm leading-relaxed">{{ skill!.actuality }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- 2. ÉLÉMENTS DE PREUVE. Cards avec logo projet             -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <div class="mb-6">
+          <div class="flex items-center gap-3 mb-4">
+            <lucide-icon name="circle-check" class="h-6 w-6" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+            <h2 class="text-2xl font-bold m-0">Mes Éléments de Preuve</h2>
+          </div>
+
+          <div class="space-y-6">
+            @for (anecdote of skill!.anecdotes; track anecdote.title; let i = $index) {
+              <div class="border rounded-2xl bg-card overflow-hidden">
+
+                <!-- Header anecdote : logo projet + titre -->
+                <div class="flex items-center gap-3 px-6 pt-5 pb-3">
+                  @if (getProjectLogo(anecdote.projectId)) {
+                    <img [src]="getProjectLogo(anecdote.projectId)" [alt]="getProjectName(anecdote.projectId)"
+                         class="w-10 h-10 object-contain rounded-lg border p-1 bg-white" />
+                  }
+                  <div class="flex-1">
+                    <h3 class="font-semibold text-lg m-0">{{ anecdote.title }}</h3>
+                    <a [routerLink]="['/projects', anecdote.projectId]"
+                       class="text-xs hover:underline" [style.color]="getAccentColor()">
+                      {{ getProjectName(anecdote.projectId) }} →
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Situation. Callout coloré -->
+                <div class="mx-6 mb-4 p-4 rounded-xl border-l-4"
+                     [style.borderLeftColor]="getAccentColor()"
+                     [style.background]="getAccentColor() + '08'">
+                  <span class="text-xs font-bold uppercase tracking-wider" [style.color]="getAccentColor()">Situation</span>
+                  <p class="text-muted-foreground mt-1 leading-relaxed text-sm">{{ anecdote.situation }}</p>
+                </div>
+
+                <!-- Description. Corps principal -->
+                <div class="px-6 mb-4">
+                  <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mise en œuvre</span>
+                  <p class="text-muted-foreground mt-1 leading-relaxed text-sm">{{ anecdote.description }}</p>
+                </div>
+
+                <!-- Résultat + Valeur ajoutée. 2 cartes côte à côte -->
+                <div class="grid md:grid-cols-2 gap-3 px-6 pb-5">
+                  <div class="p-4 rounded-xl border bg-secondary/30">
+                    <div class="flex items-center gap-2 mb-2">
+                      <lucide-icon name="trophy" class="h-4 w-4" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                      <span class="font-semibold text-sm">Résultat</span>
+                    </div>
+                    <p class="text-muted-foreground text-sm leading-relaxed">{{ anecdote.result }}</p>
+                  </div>
+                  <div class="p-4 rounded-xl border bg-secondary/30">
+                    <div class="flex items-center gap-2 mb-2">
+                      <lucide-icon name="star" class="h-4 w-4" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                      <span class="font-semibold text-sm">Ma valeur ajoutée</span>
+                    </div>
+                    <p class="text-muted-foreground text-sm leading-relaxed">{{ anecdote.valueAdded }}</p>
+                  </div>
+                </div>
+
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- 3. AUTOCRITIQUE. Grille 2×2 de cartes avec icônes         -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <div class="mb-6">
+          <div class="flex items-center gap-3 mb-4">
+            <lucide-icon name="circle-alert" class="h-6 w-6" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+            <h2 class="text-2xl font-bold m-0">Mon Autocritique</h2>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="border rounded-2xl bg-card p-5">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" [style.background]="getAccentColor() + '15'">
+                  <lucide-icon name="gauge" class="h-4 w-4" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                </div>
+                <h4 class="font-semibold m-0">Niveau de maîtrise</h4>
+              </div>
+              <p class="text-muted-foreground text-sm leading-relaxed">{{ skill!.critique.mastery }}</p>
+            </div>
+
+            <div class="border rounded-2xl bg-card p-5">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" [style.background]="getAccentColor() + '15'">
+                  <lucide-icon name="heart" class="h-4 w-4" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                </div>
+                <h4 class="font-semibold m-0">Importance dans mon profil</h4>
+              </div>
+              <p class="text-muted-foreground text-sm leading-relaxed">{{ skill!.critique.importance }}</p>
+            </div>
+
+            <div class="border rounded-2xl bg-card p-5">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" [style.background]="getAccentColor() + '15'">
+                  <lucide-icon name="timer" class="h-4 w-4" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                </div>
+                <h4 class="font-semibold m-0">Vitesse d'acquisition</h4>
+              </div>
+              <p class="text-muted-foreground text-sm leading-relaxed">{{ skill!.critique.acquisition }}</p>
+            </div>
+
+            <div class="border rounded-2xl bg-card p-5">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" [style.background]="getAccentColor() + '15'">
+                  <lucide-icon name="message-circle" class="h-4 w-4" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                </div>
+                <h4 class="font-semibold m-0">Mes conseils et recul</h4>
+              </div>
+              <p class="text-muted-foreground text-sm leading-relaxed">{{ skill!.critique.advice }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- 4. ÉVOLUTION. 2 colonnes côte à côte                      -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <div class="mb-6">
+          <div class="flex items-center gap-3 mb-4">
+            <lucide-icon name="trending-up" class="h-6 w-6" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+            <h2 class="text-2xl font-bold m-0">Mon Évolution</h2>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="border rounded-2xl bg-card p-5">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" [style.background]="getAccentColor() + '15'">
+                  <lucide-icon name="target" class="h-4 w-4" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                </div>
+                <h4 class="font-semibold m-0">Objectifs professionnels</h4>
+              </div>
+              <p class="text-muted-foreground text-sm leading-relaxed">{{ skill!.evolution.goals }}</p>
+            </div>
+
+            <div class="border rounded-2xl bg-card p-5">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" [style.background]="getAccentColor() + '15'">
+                  <lucide-icon name="graduation-cap" class="h-4 w-4" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                </div>
+                <h4 class="font-semibold m-0">Formations en cours / à venir</h4>
+              </div>
+              <p class="text-muted-foreground text-sm leading-relaxed">{{ skill!.evolution.training }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- 5. RÉALISATIONS ASSOCIÉES                                  -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        @if (skill!.relatedProjects.length) {
+          <div class="border rounded-2xl bg-card">
+            <div class="p-6">
+              <h2 class="text-xl mb-3">Réalisations associées</h2>
+              <div class="flex flex-wrap gap-2">
+                @for (pid of skill!.relatedProjects!; track pid) {
+                  <a [routerLink]="['/projects', pid]"
+                     class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border hover:shadow-md cursor-pointer text-sm transition-all"
+                     [style.borderColor]="getAccentColor() + '30'"
+                     [style.background]="getAccentColor() + '05'">
+                    @if (getProjectLogo(pid)) {
+                      <img [src]="getProjectLogo(pid)" [alt]="getProjectName(pid)" class="w-5 h-5 object-contain" />
+                    }
+                    <span class="font-medium">{{ getProjectName(pid) }}</span>
+                    <lucide-icon name="arrow-right" class="h-3 w-3" [style.color]="getAccentColor()" aria-hidden="true"></lucide-icon>
+                  </a>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </section>
+</main>
