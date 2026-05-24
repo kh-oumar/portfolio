@@ -1,5 +1,6 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -1852,6 +1853,27 @@ const projectsData: Record<string, Project> = {
 
 };
 
+// Ordre d'affichage des projets dans le panneau latéral.
+// Reflète l'ordre de la page commune des réalisations.
+const PROJECTS_ORDER: string[] = ['venalabs', 'macway', 'followdeen', 'wedriv', 'portfolio'];
+
+// Couleur d'accent par projet (cohérent avec leur identité).
+const PROJECT_COLORS: Record<string, string> = {
+  'venalabs': '#8b5cf6',
+  'macway': '#0ea5e9',
+  'followdeen': '#10b981',
+  'wedriv': '#f59e0b',
+  'portfolio': '#6366f1',
+};
+
+type SidebarProject = {
+  id: string;
+  title: string;
+  year: string;
+  logo?: string;
+  color: string;
+};
+
 @Component({
   selector: 'app-project-detail',
   imports: [RouterLink, NgClass, LucideAngularModule],
@@ -1860,8 +1882,39 @@ const projectsData: Record<string, Project> = {
 })
 export class ProjectDetailComponent {
   private route = inject(ActivatedRoute);
-  id = this.route.snapshot.paramMap.get('id') ?? '';
-  project: Project | null = projectsData[this.id] ?? null;
+  id = '';
+  project: Project | null = null;
+
+  // Liste pré-calculée pour le panneau latéral.
+  readonly sidebarProjects: SidebarProject[] = PROJECTS_ORDER
+    .filter(k => projectsData[k])
+    .map(k => ({
+      id: k,
+      title: this.shortenTitle(projectsData[k].title),
+      year: projectsData[k].year,
+      logo: projectsData[k].logo,
+      color: PROJECT_COLORS[k] ?? '#6366f1',
+    }));
+
+  constructor() {
+    // On réagit aux changements de paramètre pour que la navigation depuis
+    // le panneau latéral mette bien à jour la réalisation affichée.
+    this.route.paramMap
+      .pipe(takeUntilDestroyed())
+      .subscribe(p => {
+        this.id = p.get('id') ?? '';
+        this.project = projectsData[this.id] ?? null;
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+  }
+
+  private shortenTitle(title: string): string {
+    // Format "VenaLabs - Crypto Learning" -> "VenaLabs"
+    const dash = title.indexOf(' - ');
+    return dash > 0 ? title.slice(0, dash) : title;
+  }
 
   private skillsInfo: Record<string, { name: string; logo?: string; icon?: string }> = {
     'symfony':              { name: 'Symfony',                                    logo: 'assets/logos/symfony.png' },

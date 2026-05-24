@@ -1,6 +1,11 @@
 <main>
   <section class="section-padding">
-    <div class="container-custom max-w-4xl">
+    <!-- Sur les très grands écrans on élargit le container pour laisser la place
+         au panneau latéral des compétences, sans décaler le contenu centré. -->
+    <div class="container-custom min-[1500px]:max-w-[1540px]">
+
+      <!-- Bloc 1 : bouton retour + en-tête de compétence. Toujours centré. -->
+      <div class="max-w-4xl mx-auto">
       <!-- Bouton retour -->
       <a routerLink="/skills" class="inline-flex items-center gap-2 px-4 py-2 rounded-md border mb-8 hover:bg-secondary transition-colors">
         <lucide-icon name="arrow-left" class="h-4 w-4" aria-hidden="true"></lucide-icon>
@@ -294,6 +299,19 @@
             </div>
           }
         }
+      }
+      </div>
+      <!-- Fin du bloc 1 (centré). -->
+
+      @if (skill) {
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <!-- Bloc 2 : contenu de la compétence + panneau latéral.        -->
+      <!-- Le contenu reste centré (max-w-4xl mx-auto), le panneau     -->
+      <!-- est positionné en absolu à droite pour ne pas décaler le    -->
+      <!-- centrage. Il démarre au niveau du bloc « Définition ».      -->
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <div class="relative">
+        <div class="max-w-4xl mx-auto">
 
         <!-- ════════════════════════════════════════════════════════════ -->
         <!-- 1. DÉFINITION & CONTEXTE. Layout image + texte            -->
@@ -520,7 +538,111 @@
             </div>
           </div>
         }
+        </div>
+        <!-- Fin du contenu centré du Bloc 2. -->
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- SIDEBAR : Navigation entre toutes les compétences           -->
+        <!-- Techniques d'abord, humaines ensuite. Sticky au scroll.     -->
+        <!-- Positionnée en absolu pour ne pas décaler le centrage.      -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- top-0 bottom-0 : on étire l'aside sur toute la hauteur du contenu
+             pour que le sticky intérieur puisse suivre tout le scroll. -->
+        <aside class="hidden min-[1500px]:block absolute top-0 bottom-0 right-4 w-48"
+               aria-label="Navigation entre les compétences">
+          <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1 -mr-1">
+            <nav class="border rounded-2xl bg-card shadow-sm p-4">
+              <div class="flex items-center gap-2 mb-4 px-1">
+                <lucide-icon name="layers" class="h-4 w-4 text-muted-foreground" aria-hidden="true"></lucide-icon>
+                <h3 class="font-semibold m-0 text-xs uppercase tracking-wider text-muted-foreground">
+                  Toutes mes compétences
+                </h3>
+              </div>
+
+              <!-- Compétences techniques -->
+              <div class="mb-5">
+                <div class="flex items-center gap-2 mb-2 px-2">
+                  <span class="h-1.5 w-1.5 rounded-full bg-accent"></span>
+                  <span class="text-[11px] font-semibold uppercase tracking-wider text-accent">
+                    Techniques · {{ techSkills.length }}
+                  </span>
+                </div>
+                <ul class="space-y-0.5">
+                  @for (s of techSkills; track s.id) {
+                    <li>
+                      <a [routerLink]="['/skills', s.id]"
+                         class="relative flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-lg transition-all duration-200 group"
+                         [ngClass]="s.id === id
+                           ? 'bg-secondary text-foreground font-semibold'
+                           : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'"
+                         [attr.aria-current]="s.id === id ? 'page' : null">
+                        @if (s.id === id) {
+                          <span class="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-1 rounded-r-full"
+                                [style.background]="s.color"></span>
+                        }
+                        @if (s.logo) {
+                          <img [src]="s.logo" [alt]="''" aria-hidden="true"
+                               class="w-6 h-6 object-contain shrink-0" />
+                        }
+                        <span class="text-sm flex-1 truncate">{{ s.name }}</span>
+                        <span class="text-[10px] tabular-nums font-medium px-1.5 py-0.5 rounded-md border"
+                              [ngClass]="s.id === id ? 'border-transparent' : 'border-border/60'"
+                              [style.color]="s.color"
+                              [style.background]="s.color + '12'">
+                          {{ s.level }}/10
+                        </span>
+                      </a>
+                    </li>
+                  }
+                </ul>
+              </div>
+
+              <!-- Compétences humaines -->
+              <div>
+                <div class="flex items-center gap-2 mb-2 px-2">
+                  <span class="h-1.5 w-1.5 rounded-full bg-pink-500"></span>
+                  <span class="text-[11px] font-semibold uppercase tracking-wider text-pink-500">
+                    Humaines · {{ humanSkills.length }}
+                  </span>
+                </div>
+                <ul class="space-y-0.5">
+                  @for (s of humanSkills; track s.id) {
+                    <li>
+                      <a [routerLink]="['/skills', s.id]"
+                         class="relative flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-lg transition-all duration-200 group"
+                         [ngClass]="s.id === id
+                           ? 'bg-secondary text-foreground font-semibold'
+                           : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'"
+                         [attr.aria-current]="s.id === id ? 'page' : null">
+                        @if (s.id === id) {
+                          <span class="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-1 rounded-r-full"
+                                [style.background]="s.color"></span>
+                        }
+                        @if (s.logo) {
+                          <img [src]="s.logo" [alt]="''" aria-hidden="true"
+                               class="w-6 h-6 object-contain shrink-0" />
+                        }
+                        <span class="text-sm flex-1 truncate">{{ s.name }}</span>
+                        <span class="text-[10px] tabular-nums font-medium px-1.5 py-0.5 rounded-md border"
+                              [ngClass]="s.id === id ? 'border-transparent' : 'border-border/60'"
+                              [style.color]="s.color"
+                              [style.background]="s.color + '12'">
+                          {{ s.level }}/10
+                        </span>
+                      </a>
+                    </li>
+                  }
+                </ul>
+              </div>
+
+            </nav>
+          </div>
+        </aside>
+
+      </div>
+      <!-- Fin du Bloc 2 (contenu + panneau latéral). -->
       }
+
     </div>
   </section>
 </main>

@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -578,6 +579,35 @@ const skillsData: Record<string, SkillDetail> = {
 
 };
 
+// Couleur d'accent par compétence (hex) - utilisée dans le template et la sidebar.
+const SKILL_COLORS: Record<string, string> = {
+  'symfony': '#a855f7',
+  'angular': '#ef4444',
+  'react-nextjs': '#06b6d4',
+  'nextjs': '#0f172a',
+  'spring-boot': '#22c55e',
+  'docker': '#2496ed',
+  'optimisation-ux': '#ec4899',
+  'collaboration-agile': '#14b8a6',
+  'autonomie-resolution': '#f97316',
+  'vision-produit': '#8b5cf6',
+};
+
+// Ordre fixe pour la sidebar : techniques d'abord, humaines ensuite.
+const SIDEBAR_ORDER: string[] = [
+  'symfony', 'angular', 'spring-boot', 'nextjs', 'react-nextjs', 'docker',
+  'collaboration-agile', 'optimisation-ux', 'autonomie-resolution', 'vision-produit',
+];
+
+type SidebarSkill = {
+  id: string;
+  name: string;
+  category: 'tech' | 'human';
+  level: number;
+  logo?: string;
+  color: string;
+};
+
 @Component({
   selector: 'app-skill-detail',
   imports: [RouterLink, NgClass, LucideAngularModule],
@@ -587,8 +617,37 @@ const skillsData: Record<string, SkillDetail> = {
 export class SkillDetailComponent {
   private readonly route = inject(ActivatedRoute);
 
-  id = this.route.snapshot.paramMap.get('id') ?? '';
-  skill: SkillDetail | null = skillsData[this.id] ?? null;
+  id = '';
+  skill: SkillDetail | null = null;
+
+  // Listes pré-calculées pour la sidebar : techniques d'abord, humaines ensuite.
+  private readonly allSidebarSkills: SidebarSkill[] = SIDEBAR_ORDER
+    .filter(k => skillsData[k])
+    .map(k => ({
+      id: k,
+      name: skillsData[k].name,
+      category: skillsData[k].category,
+      level: skillsData[k].level,
+      logo: skillsData[k].logo,
+      color: SKILL_COLORS[k] ?? '#6366f1',
+    }));
+
+  readonly techSkills: SidebarSkill[] = this.allSidebarSkills.filter(s => s.category === 'tech');
+  readonly humanSkills: SidebarSkill[] = this.allSidebarSkills.filter(s => s.category === 'human');
+
+  constructor() {
+    // On réagit aux changements de paramètre pour que la navigation depuis la sidebar
+    // mette bien à jour la compétence affichée sans recréer le composant.
+    this.route.paramMap
+      .pipe(takeUntilDestroyed())
+      .subscribe(p => {
+        this.id = p.get('id') ?? '';
+        this.skill = skillsData[this.id] ?? null;
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+  }
 
   private projectsInfo: Record<string, { name: string; logo?: string }> = {
     'portfolio': { name: 'Portfolio', logo: 'assets/logos/portfolio.png' },
@@ -603,21 +662,8 @@ export class SkillDetailComponent {
     cat === 'tech' ? 'bg-accent/10 text-accent border-accent/20'
       : 'bg-secondary text-secondary-foreground border-border';
 
-  // Couleur d'accent par compétence (hex)
   getAccentColor(): string {
-    const colors: Record<string, string> = {
-      'symfony': '#a855f7',
-      'angular': '#ef4444',
-      'react-nextjs': '#06b6d4',
-      'nextjs': '#0f172a',
-      'spring-boot': '#22c55e',
-      'docker': '#2496ed',
-      'optimisation-ux': '#ec4899',
-      'collaboration-agile': '#14b8a6',
-      'autonomie-resolution': '#f97316',
-      'vision-produit': '#8b5cf6',
-    };
-    return colors[this.id] ?? '#6366f1';
+    return SKILL_COLORS[this.id] ?? '#6366f1';
   }
 
   getProjectName(projectId: string): string {

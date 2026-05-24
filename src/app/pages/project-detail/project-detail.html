@@ -1,6 +1,11 @@
 <main>
   <section class="section-padding">
-    <div class="container-custom max-w-5xl">
+    <!-- Sur les très grands écrans on élargit le container pour laisser la place
+         au panneau latéral des réalisations, sans décaler le contenu centré. -->
+    <div class="container-custom min-[1500px]:max-w-[1540px]">
+
+      <!-- Bloc 1 : bouton retour. Toujours centré sur la largeur de l'article. -->
+      <div class="max-w-5xl mx-auto">
       <a routerLink="/projects" class="inline-flex items-center gap-2 px-4 py-2 rounded-md border mb-8 hover:bg-secondary/50 transition-colors">
         <lucide-icon name="arrow-left" class="h-4 w-4" aria-hidden="true"></lucide-icon>
         Retour aux réalisations
@@ -11,7 +16,20 @@
           <h1 class="mb-4">Projet non trouvé</h1>
           <a routerLink="/projects" class="underline text-primary">Voir la liste</a>
         </div>
-      } @else if (project!.rich) {
+      }
+      </div>
+      <!-- Fin du bloc 1 (centré). -->
+
+      @if (project) {
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <!-- Bloc 2 : contenu de la réalisation + panneau latéral.       -->
+      <!-- Le contenu reste centré (max-w-5xl mx-auto). Le panneau     -->
+      <!-- est en absolu à droite pour ne pas décaler le centrage.     -->
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <div class="relative">
+        <div class="max-w-5xl mx-auto">
+
+      @if (project!.rich) {
         <!-- ════════════════════════════════════════════════════ -->
         <!-- V2 LAYOUT (rich content)                             -->
         <!-- ════════════════════════════════════════════════════ -->
@@ -644,6 +662,56 @@
           </div>
         }
       }
+        </div>
+        <!-- Fin du contenu centré du Bloc 2. -->
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- SIDEBAR : Navigation entre toutes les réalisations          -->
+        <!-- Positionnée en absolu pour ne pas décaler le centrage.      -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- top-0 bottom-0 : on étire l'aside sur toute la hauteur du contenu
+             pour que le sticky intérieur puisse suivre tout le scroll. -->
+        <aside class="hidden min-[1500px]:block absolute top-0 bottom-0 right-4 w-48"
+               aria-label="Navigation entre les réalisations">
+          <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1 -mr-1">
+            <nav class="border rounded-2xl bg-card shadow-sm p-4">
+              <div class="flex items-center gap-2 mb-4 px-1">
+                <lucide-icon name="layers" class="h-4 w-4 text-muted-foreground" aria-hidden="true"></lucide-icon>
+                <h3 class="font-semibold m-0 text-xs uppercase tracking-wider text-muted-foreground">
+                  Toutes mes réalisations
+                </h3>
+              </div>
+
+              <ul class="space-y-0.5">
+                @for (p of sidebarProjects; track p.id) {
+                  <li>
+                    <a [routerLink]="['/projects', p.id]"
+                       class="relative flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-lg transition-all duration-200 group"
+                       [ngClass]="p.id === id
+                         ? 'bg-secondary text-foreground font-semibold'
+                         : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'"
+                       [attr.aria-current]="p.id === id ? 'page' : null">
+                      @if (p.id === id) {
+                        <span class="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-1 rounded-r-full"
+                              [style.background]="p.color"></span>
+                      }
+                      @if (p.logo) {
+                        <img [src]="p.logo" [alt]="''" aria-hidden="true"
+                             class="w-6 h-6 object-contain shrink-0" />
+                      }
+                      <span class="text-sm flex-1 truncate">{{ p.title }}</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </nav>
+          </div>
+        </aside>
+
+      </div>
+      <!-- Fin du Bloc 2 (contenu + panneau latéral). -->
+      }
+
     </div>
   </section>
 
