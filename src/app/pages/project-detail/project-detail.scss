@@ -768,14 +768,15 @@ article.theme-peach {
   justify-content: center;
   border: none;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: #fff;
+  color: #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 
   &:hover,
   &:focus-visible {
-    background: rgba(255, 255, 255, 0.22);
+    background: #f1f1f1;
     transform: scale(1.05);
     outline: none;
   }
