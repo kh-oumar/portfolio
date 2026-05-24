@@ -49,6 +49,14 @@
                   <lucide-icon name="external-link" class="h-4 w-4" aria-hidden="true"></lucide-icon>
                 </a>
               </div>
+            } @else if (project!.previewImages?.length) {
+              <div class="flex justify-end mt-6 md:mt-8">
+                <button type="button" (click)="scrollToPreview()"
+                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary cursor-pointer text-primary-foreground text-sm font-semibold shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+                  Voir la preview
+                  <lucide-icon name="arrow-down" class="h-4 w-4" aria-hidden="true"></lucide-icon>
+                </button>
+              </div>
             }
           </header>
 
@@ -189,6 +197,16 @@
                         <li class="info-bullet">{{ b }}</li>
                       }
                     </ul>
+                    @if (step.annexLink && project!.rich!.annexes?.groups?.length) {
+                      <div class="mt-4">
+                        <button type="button" (click)="scrollToAnnexes()"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold cursor-pointer transition-all hover:bg-primary/10 hover:border-primary/50 hover:-translate-y-0.5">
+                          <lucide-icon name="image" class="h-3.5 w-3.5" aria-hidden="true"></lucide-icon>
+                          Voir les annexes (V2 / V3)
+                          <lucide-icon name="arrow-down" class="h-3.5 w-3.5" aria-hidden="true"></lucide-icon>
+                        </button>
+                      </div>
+                    }
                   </div>
                 </div>
               }
@@ -323,6 +341,59 @@
                     <span>{{ getSkillName(skillId) }}</span>
                     <span aria-hidden="true" class="ml-auto text-muted-foreground transition-transform">→</span>
                   </a>
+                }
+              </div>
+            </section>
+          }
+
+          <!-- 09. PREVIEW (uniquement si pas de lien live, mais des captures dispo) -->
+          @if (project!.previewImages?.length) {
+            <section id="preview-gallery" class="scroll-mt-24">
+              <h2 class="section-heading"><span class="section-num">09</span>Aperçu du projet</h2>
+              <p class="text-sm md:text-base text-muted-foreground mb-5 leading-relaxed">
+                Quelques captures pour donner un aperçu du projet en attendant la mise en ligne. Cliquez sur une image pour l'agrandir.
+              </p>
+              <div class="preview-grid">
+                @for (img of project!.previewImages!; track img; let i = $index) {
+                  <button type="button" class="preview-thumb"
+                          (click)="openLightbox(img)"
+                          [attr.aria-label]="'Agrandir la capture ' + (i + 1)">
+                    <img [src]="img" [alt]="'Capture FollowDeen ' + (i + 1)" loading="lazy" />
+                  </button>
+                }
+              </div>
+            </section>
+          }
+
+          <!-- 10. ANNEXES (galerie comparative, ex: V2 vs V3) -->
+          @if (project!.rich!.annexes?.groups?.length) {
+            <section id="annexes-gallery" class="scroll-mt-24">
+              <h2 class="section-heading">
+                <span class="section-num">{{ project!.previewImages?.length ? '10' : '09' }}</span>
+                {{ project!.rich!.annexes!.title || 'Annexes' }}
+              </h2>
+              @if (project!.rich!.annexes!.description) {
+                <p class="text-sm md:text-base text-muted-foreground mb-6 leading-relaxed">{{ project!.rich!.annexes!.description }}</p>
+              }
+              <div class="space-y-8">
+                @for (group of project!.rich!.annexes!.groups; track group.label) {
+                  <div class="annex-group">
+                    <div class="flex items-baseline gap-3 mb-3">
+                      <h3 class="text-base md:text-lg font-semibold m-0">{{ group.label }}</h3>
+                      @if (group.description) {
+                        <span class="text-xs md:text-sm text-muted-foreground italic">{{ group.description }}</span>
+                      }
+                    </div>
+                    <div class="preview-grid">
+                      @for (img of group.images; track img; let i = $index) {
+                        <button type="button" class="preview-thumb"
+                                (click)="openLightbox(img)"
+                                [attr.aria-label]="'Agrandir l\'image ' + (i + 1) + ' de ' + group.label">
+                          <img [src]="img" [alt]="group.label + ' - capture ' + (i + 1)" loading="lazy" />
+                        </button>
+                      }
+                    </div>
+                  </div>
                 }
               </div>
             </section>
@@ -575,4 +646,17 @@
       }
     </div>
   </section>
+
+  @if (lightboxImage()) {
+    <div class="lightbox-overlay"
+         (click)="closeLightbox()"
+         role="dialog"
+         aria-modal="true"
+         aria-label="Capture agrandie">
+      <button type="button" class="lightbox-close" (click)="closeLightbox()" aria-label="Fermer">
+        <lucide-icon name="x" class="h-5 w-5" aria-hidden="true"></lucide-icon>
+      </button>
+      <img [src]="lightboxImage()!" alt="Capture agrandie" (click)="$event.stopPropagation()" />
+    </div>
+  }
 </main>

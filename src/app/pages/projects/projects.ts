@@ -47,7 +47,7 @@ export class ProjectsComponent {
     {
       id: 'followdeen',
       title: 'FollowDeen - Marketplace de Cession',
-      description: "Marketplace pour acheter et vendre des business en ligne (e-commerce, SaaS, apps) avec escrow Stripe réel.",
+      description: "Marketplace pour acheter et vendre des business en ligne (sites, boutiques, applications), avec un paiement sécurisé bloqué jusqu'à la validation de la vente.",
       tags: ['Java', 'Spring Boot', 'Next.js', 'React', 'TypeScript', 'PostgreSQL', 'Stripe', 'Docker'],
       year: '2025-2026',
       logo: 'assets/logos/followdeen.svg'

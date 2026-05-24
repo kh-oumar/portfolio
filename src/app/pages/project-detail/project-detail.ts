@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
@@ -22,6 +22,19 @@ type RichStep = {
   title: string;
   description?: string;
   bullets: string[];
+  annexLink?: boolean;   // si true, affiche un bouton "Voir les annexes" qui scrolle vers la section annexes
+};
+
+type AnnexGroup = {
+  label: string;          // ex: "Airdroped V2"
+  description?: string;
+  images: string[];
+};
+
+type RichAnnexes = {
+  title?: string;          // titre de la section (défaut: "Annexes")
+  description?: string;    // intro courte
+  groups: AnnexGroup[];
 };
 
 type StackEntry = {
@@ -64,7 +77,7 @@ type CritiquePoint = {
 
 type ProjectRichContent = {
   // Optionnels. Différencient visuellement la page
-  theme?: 'default' | 'emerald' | 'amber' | 'violet' | 'sky' | 'gold';
+  theme?: 'default' | 'emerald' | 'amber' | 'violet' | 'sky' | 'gold' | 'peach';
   tagline?: string;            // sous-titre éditorial sous le H1
   keyMetrics?: KeyMetric[];    // bandeau de chiffres-clés
   // Sections obligatoires (couvrent la grille d'évaluation)
@@ -76,6 +89,7 @@ type ProjectRichContent = {
   results: RichResults;
   aftermath?: RichAftermath;
   critique: CritiquePoint[];   // points structurés (titre + body)
+  annexes?: RichAnnexes;       // galerie d'annexes (ex: comparaison V2/V3)
 };
 
 type Project = {
@@ -85,6 +99,7 @@ type Project = {
   year: string;
   logo?: string;
   url?: string;            // lien vers le projet en ligne (affiché dans le header)
+  previewImages?: string[]; // captures pour projets pas encore en ligne (galerie + lightbox)
   presentation: string;
   objectives: { context: string; goals: string; challenges: string; risks: string };
   steps: string[];
@@ -203,190 +218,171 @@ const projectsData: Record<string, Project> = {
       theme: 'default',
       tagline: "Le projet que tu es en train de lire. Mon premier vrai projet Angular, et le miroir de tout ce que j'ai appris ailleurs.",
       presentation: [
-        "Ce portfolio est le projet que tu es en train de lire. C'est à la fois la vitrine de mon parcours, cinq projets et dix compétences détaillés, et un projet technique à part entière, conçu pour valider des notions de mon cursus tout en servant à mes candidatures professionnelles.",
-        "C'est aussi mon premier vrai projet Angular. Avant ça, je faisais surtout du React (côté startup et freelance) et du Symfony / Twig (côté alternance). Angular, je l'avais croisé pendant mes études mais jamais sur un projet ambitieux, jamais avec ses dernières fonctionnalités. Repartir sur ce framework m'a obligé à réapprendre des automatismes : on n'écrit pas un composant Angular comme un composant React, on n'organise pas la navigation pareil, et le système de réactivité (les signals) demande de désapprendre certains réflexes pris ailleurs. C'est inconfortable au début, et c'est précisément pour ça que j'ai voulu y passer du temps : ça force à reprendre les choses depuis le début, pas en mode automatique.",
-        "Le travail le plus dur n'a pas été le code, mais la rédaction. Reprendre chacun de mes projets un par un (MacWay, VenaLabs, FollowDeen, WeDriv) pour les raconter avec la même structure (présentation, objectifs, contexte, étapes, acteurs, résultats, lendemains, regard critique) m'a forcé à prendre du recul sur tout mon parcours. C'est en réécrivant chaque projet que j'ai vu des fils rouges que je n'avais pas conscientisés : le passage du « code école » au « code prod » à MacWay, la rigueur de validation manuelle qui revient sur mes projets solo, des réflexes techniques qui se répondent d'un projet au suivant. Ce portfolio est donc autant un exercice technique qu'un exercice d'introspection. Et c'est cette double dimension qui en fait le projet le plus formateur de la liste, contre toute attente."
+        "Ce portfolio est le projet que tu es en train de lire. C'est à la fois la vitrine de mon parcours et un projet à part entière, pensé pour valider mon cursus tout en me servant pour mes candidatures.",
+        "C'est aussi mon premier vrai projet Angular. Je l'avais croisé pendant mes études, mais jamais sur quelque chose d'ambitieux. Repartir dessus m'a obligé à réapprendre des automatismes que j'avais pris ailleurs, à sortir du mode automatique. C'est inconfortable au début, et c'est précisément pour ça que j'ai voulu y passer du temps.",
+        "Le travail le plus dur n'a pas été le code, mais la rédaction. Reprendre chacun de mes projets un par un, pour les raconter avec la même structure, m'a forcé à prendre du recul sur tout mon parcours. C'est en réécrivant que j'ai vu des fils rouges que je n'avais pas conscientisés, des réflexes qui se répondent d'un projet au suivant, des choses apprises quelque part qui resservent ailleurs. Ce portfolio est donc autant un exercice technique qu'un exercice d'introspection. Et c'est cette double dimension qui en fait le projet le plus formateur de la liste, contre toute attente."
       ],
       objectives: [
-        "Construire un portfolio qui dépasse le simple site vitrine, pour devenir une démonstration technique de ce que je sais faire en frontend",
-        "M'approprier sérieusement Angular avec ses dernières fonctionnalités, plutôt que d'en rester à des connaissances scolaires",
-        "Concevoir une architecture extensible : ajouter une compétence ou un projet doit être une question de données, pas de code",
-        "Reprendre chaque projet en profondeur pour le raconter avec une structure cohérente couvrant les sept notions exigées par mon cursus",
-        "Tirer un fil de cohérence sur tout mon parcours : ce que j'ai appris où, comment ça se transpose, ce que j'en garde aujourd'hui",
-        "Livrer un site rapide, accessible et lisible sur tous les écrans, qui me serve sur la durée pour mes candidatures"
+        "Construire un portfolio qui ne soit pas qu'une vitrine, mais aussi une démonstration de ce que je sais faire",
+        "M'approprier Angular pour de vrai, plutôt que d'en rester à des connaissances scolaires",
+        "Concevoir un site facile à faire évoluer : ajouter un projet ou une compétence doit prendre quelques minutes, pas une refonte",
+        "Reprendre chaque projet en profondeur, avec une structure cohérente d'un bout à l'autre du site",
+        "Tirer un fil de cohérence sur tout mon parcours, identifier ce que j'ai appris où, et ce que j'en garde aujourd'hui",
+        "Livrer un site rapide, lisible et propre, qui me serve sur la durée pour mes candidatures"
       ],
       context: {
-        period: "Mars 2026 à Mai 2026 (en parallèle de l'école et de mon alternance)",
-        framework: "Projet personnel autodidacte, en lien avec mon cursus pour la validation des compétences",
+        period: "Janvier 2026 à Mai 2026, en parallèle de l'école et de mon alternance",
+        framework: "Projet personnel, en lien avec mon cursus pour la validation des compétences",
         mode: "100 % remote, sur soirs et week-ends",
         team: [
-          { role: "Moi", description: "Toutes les casquettes : conception du parcours, architecture Angular, design system, rédaction du contenu (cinq projets et dix compétences), accessibilité, déploiement. Surtout, c'est moi qui ai dû me confronter à la rédaction. La partie la plus longue et la plus formatrice du projet." }
+          { role: "Moi", description: "Toutes les casquettes : conception, développement, design, rédaction, mise en ligne. La partie la plus longue et la plus formatrice n'a pas été le code, mais la rédaction." }
         ],
         organization: [
-          "Plan de travail défini en amont : structure du site, liste des compétences à présenter, projets à reprendre, sept notions à couvrir par projet",
-          "Itérations courtes : une compétence ou un projet à fond avant de passer au suivant, pour ne jamais avoir un site à moitié fini",
+          "Plan de travail défini en amont : structure du site, liste des compétences, projets à reprendre",
+          "Itérations courtes : un projet ou une compétence à fond avant de passer au suivant, pour ne jamais avoir un site à moitié fini",
           "Mises en ligne progressives à chaque jalon validé, plutôt qu'en gros lots",
-          "Auto-relecture systématique à 24h d'intervalle pour rattraper ce que j'écris « dans le rush »",
+          "Auto-relecture systématique à 24h d'intervalle pour rattraper ce que j'écris dans le rush",
           "Recherche d'inspiration sur d'autres portfolios professionnels pour valider les choix de structure et de ton"
         ],
         stack: [
-          { label: "Framework principal", value: "Angular avec composants autonomes (sans NgModules), réactivité par signals et chargement à la demande des pages" },
-          { label: "Langage", value: "TypeScript en mode strict, avec des types discriminés pour gérer plusieurs versions de contenu (legacy / enrichi)" },
-          { label: "Style", value: "Tailwind CSS pour l'utilitaire, SCSS pour les composants spécifiques et les variables de thème" },
-          { label: "Système de thèmes", value: "Variables CSS surchargées localement par projet. Chaque réalisation a sa propre couleur sans dupliquer le style" },
-          { label: "Routing", value: "Routes paresseuses pour ne charger que ce qui est utile à l'utilisateur, et navigation typée" },
+          { label: "Framework principal", value: "Angular dans sa version récente" },
+          { label: "Langage", value: "TypeScript en mode strict, pour attraper les erreurs avant qu'elles arrivent en ligne" },
+          { label: "Style", value: "Tailwind pour aller vite sur l'essentiel, SCSS pour les composants spécifiques" },
+          { label: "Système de thèmes", value: "Chaque projet a sa propre couleur sans dupliquer le style. Une variable change, tout suit" },
+          { label: "Routing", value: "Chargement à la demande : chaque page n'apporte que ce dont elle a besoin" },
           { label: "Hébergement", value: "GitHub Pages avec déploiement automatique à chaque mise à jour validée" },
         ],
         stakes: [
-          "Valider les compétences attendues par mon cursus avec un projet réel, pas une démo de TP",
-          "Crédibiliser mon profil pour mes candidatures futures. Un portfolio bien fait pèse plus que dix lignes de CV",
-          "M'approprier Angular en profondeur sur un projet où j'ai le temps de bien faire les choses",
-          "Obtenir un actif personnel durable, qui me servira pendant des années et que je pourrai faire évoluer",
+          "Valider les compétences attendues par mon cursus avec un projet réel",
+          "Crédibiliser mon profil pour mes candidatures. Un portfolio bien fait pèse plus que dix lignes de CV",
+          "Obtenir un actif personnel qui me servira plusieurs années, et que je pourrai faire évoluer",
           "Tirer du sens de mon parcours en le racontant avec recul, plutôt que d'aligner des projets sans fil conducteur"
         ],
         risks: [
-          "Passer trop de temps sur le design ou la technique au détriment du contenu. Le contenu reste le cœur du portfolio",
-          "Sur-architecturer pour un projet qui n'en a pas besoin (un portfolio n'est pas une marketplace)",
+          "Passer trop de temps sur le design ou la technique au détriment du contenu, qui reste le cœur du portfolio",
+          "Sur-architecturer un projet qui n'en avait pas besoin",
           "Sous-estimer le temps de rédaction. C'est arrivé, et c'est ce qui a pris le plus de temps au final",
-          "Perdre la cohérence visuelle entre les pages projets et compétences en multipliant les variations",
-          "Mettre en ligne un site avec des incohérences (typos, dates, liens cassés) qui décrédibiliseraient le reste"
+          "Perdre la cohérence visuelle en multipliant les variations entre projets et compétences"
         ]
       },
       steps: [
         {
-          title: "Cadrage et choix techniques",
-          description: "Premières semaines : poser les fondations du site et le périmètre du contenu",
+          title: "Cadrage et premières décisions",
+          description: "Poser les fondations du site et le périmètre du contenu",
           bullets: [
-            "Définition du périmètre : dix compétences à présenter, cinq projets à reprendre, sept notions par projet",
-            "Choix d'Angular comme framework principal. Premier vrai projet Angular pour moi, l'occasion de l'apprendre proprement",
-            "Choix de Tailwind pour gagner du temps sur le style utilitaire, complété par SCSS pour les composants spécifiques",
-            "Modélisation initiale des types TypeScript pour les compétences et les projets",
-            "Décision dès le départ d'une architecture pilotée par les données, pour pouvoir ajouter du contenu sans toucher à la structure"
+            "Définition du périmètre : dix compétences à présenter, cinq projets à reprendre, sept notions à couvrir par projet",
+            "Choix d'Angular comme socle technique, en sachant que j'allais devoir l'apprendre en chemin",
+            "Décision dès le départ d'un site où ajouter du contenu n'oblige pas à toucher à la structure",
+            "Mise en place de la grille graphique et des règles de ton avant d'écrire la première ligne"
           ]
         },
         {
           title: "Apprentissage d'Angular et premières pages",
-          description: "La courbe d'apprentissage : se réapproprier un framework qu'on connaît mal sur un projet ambitieux",
+          description: "Se réapproprier un framework qu'on connaît mal sur un projet ambitieux",
           bullets: [
-            "Lecture de la documentation officielle d'Angular sur les composants autonomes, les signals et le routing à la demande",
-            "Petits exercices pour me familiariser avec les nouvelles syntaxes (boucles, conditions, switch dans les templates)",
-            "Construction de la première page (l'accueil) en partant des fondamentaux, pour valider ma compréhension avant de produire en série",
-            "Mise en place du routing avec chargement à la demande pour que chaque page n'apporte que ce dont elle a besoin",
-            "Premier piège évité de justesse : appeler les signals comme des variables au lieu de fonctions. Le compilateur TypeScript m'a sauvé plusieurs fois"
+            "Lecture de la documentation officielle pour comprendre comment Angular se pense aujourd'hui",
+            "Petits exercices pour me familiariser avec les nouvelles syntaxes avant de me lancer sur le vrai site",
+            "Construction de la page d'accueil en partant des fondamentaux, pour valider ma compréhension avant de produire en série",
+            "Mise en place de la navigation et du chargement à la demande, pour que le site reste léger"
           ]
         },
         {
           title: "Composants partagés et système de thèmes",
           description: "Construire les briques de base et le moteur visuel qui rend chaque projet unique",
           bullets: [
-            "Conception du composant carte projet : logo, titre, description, tags avec dépassement géré (« +N » si plus de cinq)",
-            "Conception du composant carte compétence : logo ou icône, nom, catégorie, état d'expertise",
-            "Système de thèmes par variables CSS : chaque projet peut surcharger les couleurs de la page sans dupliquer le style",
-            "Cinq thèmes définis (par défaut, emerald, sky, gold, violet) pour différencier visuellement les projets sans casser la cohérence",
-            "Composants accessibles dès la conception (rôles ARIA, navigation clavier, contraste validé)"
+            "Conception de la carte projet : logo, titre, description, étiquettes avec un comportement propre quand il y en a trop",
+            "Conception de la carte compétence : logo ou icône, nom, catégorie, niveau de maîtrise",
+            "Système de thèmes par couleurs : chaque projet peut imposer son ambiance sans dupliquer le style",
+            "Accessibilité prise en compte dès la conception, pas ajoutée à la fin"
           ]
         },
         {
           title: "Pages détaillées des compétences",
           description: "Dix fiches compétences avec une identité visuelle propre à chacune",
           bullets: [
-            "Définition d'une structure commune (présentation, anecdotes au format STAR, autocritique, évolution, projets associés)",
-            "Implémentation d'un système qui route chaque compétence vers un en-tête visuel unique selon son identité",
-            "Couleurs et accents spécifiques par compétence (Symfony violet, Angular rouge, Spring Boot vert, etc.) sans dupliquer la logique",
-            "Intégration d'icônes Lucide pour les compétences sans logo (sécurisation, données, UX, agile, autonomie, vision)",
-            "Rédaction des dix fiches au format STAR, avec une vraie autocritique sur chacune. Pas de la fausse modestie"
+            "Définition d'une structure commune à toutes les fiches, du même format mais avec assez d'espace pour le ton personnel",
+            "Couleurs et accents spécifiques par compétence, pour les différencier sans casser la cohérence d'ensemble",
+            "Icônes intégrées pour les compétences qui n'ont pas de logo officiel",
+            "Rédaction des dix fiches avec une vraie autocritique sur chacune"
           ]
         },
         {
-          title: "Pages détaillées des projets et reprise du contenu",
-          description: "La partie qui a pris le plus de temps : reprendre chaque projet en profondeur, avec une structure unifiée",
+          title: "Pages détaillées des projets",
+          description: "La partie qui a pris le plus de temps : reprendre chaque projet en profondeur",
           bullets: [
-            "Conception d'un système à deux versions : un format hérité et un format enrichi avec sept sections détaillées (présentation, objectifs, contexte, étapes, acteurs, résultats, lendemains, regard critique)",
-            "Migration progressive de chaque projet vers le format enrichi, avec une vraie réflexion personnelle sur chacun",
-            "Cartes individuelles pour le regard critique avec distinction entre leçons apprises et acquis durables",
-            "Bandeaux de chiffres-clés pour donner immédiatement les ordres de grandeur du projet",
+            "Conception d'un format unifié couvrant les sept notions exigées par le cursus, sans en faire un formulaire à remplir",
+            "Migration progressive de chaque projet vers ce format, avec une vraie réflexion personnelle sur chacun",
             "Cohérence du ton sur tous les projets : personnel, lucide, sans jargon inutile"
           ]
         },
         {
-          title: "Polish, accessibilité et mise en ligne",
-          description: "Finitions et passage en ligne avec un déploiement automatisé",
+          title: "Finitions et mise en ligne",
+          description: "Polish et passage en production",
           bullets: [
-            "Optimisations SEO : balises meta, structure HTML sémantique, hiérarchie des titres",
-            "Accessibilité validée : rôles ARIA, navigation clavier, contraste de couleurs respectant les standards",
-            "Performances : routes chargées à la demande, optimisation des images, suppression du code mort",
-            "Configuration de GitHub Pages avec déploiement automatique à chaque mise à jour",
-            "Tests manuels sur mobile, tablette et desktop pour valider l'affichage et les interactions"
+            "Optimisations pour le référencement et la lisibilité, sans surcharger les pages",
+            "Accessibilité validée : navigation au clavier, contraste, lecture d'écran",
+            "Site léger et rapide, même sur une connexion lente",
+            "Déploiement automatique à chaque mise à jour validée",
+            "Tests sur téléphone, tablette et ordinateur avant publication"
           ]
         }
       ],
       actors: [
         {
           role: "Moi (porteur unique)",
-          description: "Toutes les casquettes : conception, architecture, design, développement, rédaction, accessibilité, déploiement. La spécificité de ce projet, c'est que j'étais à la fois le développeur ET le sujet. Chaque ligne de contenu parle d'expériences que j'ai vécues, ce qui rend la rédaction plus exigeante : impossible de bluffer."
+          description: "J'étais seul aux commandes sur ce projet. Conception, design, développement, rédaction, mise en ligne. La spécificité, c'est que j'étais à la fois le développeur et le sujet. Chaque ligne parle d'expériences que j'ai vécues, ce qui rend la rédaction plus exigeante que sur un projet client."
         },
         {
-          role: "Famille et amis (premiers lecteurs)",
-          description: "Sollicités à différents moments pour relire les pages compétences et projets. Leurs retours étaient précieux quand ils ne comprenaient pas une phrase ou un terme technique. C'était le signe que je devais simplifier. C'est grâce à eux que j'ai banni plusieurs jargons et reformulé certains paragraphes. Un portfolio doit être lisible par un recruteur non-tech."
+          role: "Famille et amis (relectures et conseils)",
+          description: "Sollicités à différents moments pour relire les pages et me donner leur avis. Leurs retours étaient précieux quand ils ne comprenaient pas une phrase ou un terme. C'était le signe que je devais simplifier. C'est grâce à eux que j'ai banni plusieurs jargons. Un portfolio doit rester lisible par un recruteur non-tech."
         },
         {
-          role: "Recruteurs et professionnels (relectures ponctuelles)",
-          description: "Quelques échanges avec des recruteurs et des développeurs plus expérimentés que moi pour valider la profondeur du contenu et la qualité technique perçue. Leurs retours m'ont confirmé deux choses : la richesse du contenu fait la différence (la majorité des portfolios sont superficiels), et la lucidité sur ses propres limites (l'autocritique honnête) est plus crédible que l'auto-promotion."
+          role: "Professeurs et accompagnants de mon école professionnelle (conseils et suivi)",
+          description: "Les professeurs et les personnes qui me suivent à l'école m'ont apporté un œil calibré sur les attentes du cursus. Leurs conseils ont porté sur la profondeur du contenu, la structure des fiches, et les passages qui méritaient d'être enrichis."
         }
       ],
       results: {
         personal: {
           technical: [
-            "Première vraie maîtrise d'Angular avec ses fonctionnalités modernes (composants autonomes, signals, chargement à la demande)",
-            "Architecture pilotée par les données qui rend l'ajout de contenu trivial (une compétence ou un projet en plus = quelques lignes de TypeScript)",
-            "Système de thèmes par variables CSS qui permet de personnaliser chaque projet sans dupliquer le style",
-            "Système à deux versions de contenu (hérité / enrichi) sans casser la rétrocompatibilité. Un bon exercice de typage discriminé en TypeScript",
-            "Site rapide, accessible, responsive, déployé automatiquement"
+            "Première vraie maîtrise d'Angular, acquise sur un projet complet plutôt que sur des exercices isolés",
+            "Un site pensé pour évoluer : ajouter un projet ou une compétence est désormais une affaire de quelques minutes",
+            "Un système de thèmes qui rend chaque projet visuellement unique sans dupliquer le code"
           ],
           organizational: [
-            "Capacité à mener un projet long en parallèle de l'école et de l'alternance, en restant focus sur le contenu plus que sur la technique",
+            "Capacité à mener un projet long en parallèle de l'école et de l'alternance, sans le sacrifier aux deux",
             "Discipline d'écriture : reprendre cinq projets un par un avec la même exigence, sans bâcler les derniers",
-            "Capacité à tenir une cohérence de ton sur un gros volume de contenu sans tomber dans le copier-coller d'un projet à l'autre",
-            "Auto-relecture systématique pour rattraper les phrases écrites trop vite",
-            "Validation par des relecteurs externes (proches, pros) pour rattraper ce que je ne voyais plus"
+            "Auto-relecture systématique et passage par des relecteurs externes pour rattraper ce que je ne voyais plus"
           ],
-          conclusion: "Le code de ce portfolio m'a appris Angular. Sa rédaction m'a appris autre chose, de moins attendu. Reprendre chaque réalisation, chercher les fils rouges, séparer ce que j'avais compris en route de ce que je sais désormais faire, ça m'a sorti de la posture du développeur qui livre du code pour celle du professionnel qui sait dire ce qu'il vaut. Articuler son propre travail est une compétence à part entière. Personne ne me l'avait jamais demandée aussi frontalement, et c'est ce que je garde de ce projet."
+          conclusion: "Le code m'a appris Angular. La rédaction m'a appris autre chose, de moins attendu : savoir parler de mon propre travail. C'est ce que je garde de ce projet."
         },
         business: {
           achievements: [
-            "Dix fiches compétences détaillées au format STAR, chacune avec sa propre identité visuelle",
-            "Cinq projets approfondis avec une structure unifiée couvrant les sept notions exigées par le cursus",
-            "Site déployé en production avec déploiement automatique à chaque mise à jour",
-            "Architecture extensible qui rend l'ajout d'un nouveau projet ou d'une nouvelle compétence trivial",
-            "Cohérence visuelle et tonale sur l'ensemble du site, malgré la diversité des contenus"
+            "Dix fiches compétences détaillées, chacune avec sa propre identité visuelle",
+            "Cinq projets approfondis avec une structure unifiée couvrant les sept notions du cursus",
+            "Site déployé en production, mis à jour automatiquement, prêt à servir mes candidatures"
           ],
           satisfaction: [
-            "Validation positive du contenu par des proches non-tech (preuve de lisibilité)",
-            "Validation positive de la qualité technique par des développeurs plus expérimentés",
-            "Site utilisable comme support pour mes candidatures dès maintenant, sans avoir à le retoucher pour chaque opportunité",
-            "Le site lui-même est la meilleure preuve de ce qu'il décrit. Il n'y a pas d'écart entre la promesse et la livraison"
+            "Validation positive du contenu par des proches non-tech : preuve de lisibilité",
+            "Validation positive par les professeurs et accompagnants de mon école professionnelle, qui confirme que le format et le ton sont en phase avec les attentes du cursus",
+            "Pas d'écart entre la promesse et la livraison. Le site lui-même est la preuve de ce qu'il décrit"
           ],
-          conclusion: "Ce portfolio est un actif personnel construit pour durer. Il me servira pour mes candidatures, mais aussi de base pour les versions futures que j'aurai envie de faire évoluer dans les prochaines années. L'architecture est faite pour ça. Chaque nouveau projet ou nouvelle compétence est une question de contenu, pas de refonte technique. C'est ce qui m'aurait le plus manqué si j'avais bâclé les fondations."
+          conclusion: "Ce portfolio est un actif construit pour durer. Chaque nouveau projet ou compétence est une question de contenu, pas de refonte. C'est exactement ce qui m'aurait manqué si j'avais bâclé les fondations."
         }
       },
       aftermath: {
         immediate: [
-          "Mise en ligne définitive sur le nom de domaine et déploiement automatique en place",
-          "Diffusion auprès de mon réseau (LinkedIn, anciens collègues, recruteurs avec qui j'avais des échanges en cours)",
-          "Relecture finale par quelques personnes de confiance pour rattraper les dernières typos",
-          "Sauvegarde du repository et configuration des sauvegardes automatiques"
+          "Mise en ligne définitive et déploiement automatique en place",
+          "Diffusion auprès de mon réseau : LinkedIn, anciens collègues, recruteurs avec qui j'étais en discussion",
+          "Relecture finale par quelques personnes de confiance pour rattraper les dernières typos"
         ],
         distant: [
-          "Séparation des données du code (passage à des fichiers JSON externes ou à un système de gestion de contenu) pour faciliter les mises à jour",
-          "Ajout d'un mode sombre travaillé, avec des thèmes de projets adaptés aux deux modes",
-          "Animations de transition entre les pages pour une sensation de fluidité plus marquée",
-          "Section blog ou journal pour publier de courts retours d'expérience entre deux projets",
-          "Versions internationales (anglais) si je vise des opportunités à l'étranger"
+          "Sortir le contenu du code pour pouvoir corriger une phrase sans repasser par une mise en production",
+          "Section journal pour publier de courts retours d'expérience entre deux projets",
+          "Version anglaise si je vise des opportunités à l'étranger"
         ],
         today: [
           "Le portfolio est en ligne et utilisé activement pour mes candidatures",
-          "Je continue à enrichir le contenu au fil des nouveaux projets et des nouvelles compétences acquises",
-          "L'architecture mise en place me permet d'ajouter rapidement un nouveau projet : il m'a fallu environ une heure pour intégrer FollowDeen une fois la structure stabilisée",
+          "L'architecture me permet d'ajouter un nouveau projet rapidement",
           "Le site reste vivant : je le retouche dès qu'un projet avance ou qu'une compétence se précise, sans jamais repartir de zéro"
         ]
       },
@@ -394,375 +390,396 @@ const projectsData: Record<string, Project> = {
         {
           type: 'lesson',
           title: "J'ai sous-estimé le temps de rédaction",
-          body: "J'ai initialement budgété ce projet comme un projet technique, en sous-estimant complètement le temps de rédaction. Reprendre cinq projets en profondeur, écrire dix fiches compétences au format STAR, formuler une autocritique honnête sur chaque sujet. C'est ce qui a pris le plus de temps, et de loin. À refaire, je donnerais autant de poids à la rédaction qu'à la technique dans le planning."
+          body: "Au départ, j'ai pensé ce projet comme un projet technique. Sauf que reprendre cinq projets en profondeur, écrire dix fiches compétences, formuler une autocritique honnête sur chaque sujet, c'est long. Beaucoup plus long que de coder. À refaire, je donnerais autant de poids à la rédaction qu'à la technique dans le planning, et je commencerais probablement par elle."
         },
         {
           type: 'lesson',
-          title: "Séparer les données du code, j'aurais dû y penser plus tôt",
-          body: "J'ai mis tout le contenu (compétences, projets, sections) directement dans des fichiers TypeScript. Ça marche, mais chaque correction de texte demande de toucher au code et de relancer un build. Sur la prochaine itération, je passerai les données dans des fichiers externes ou un service dédié. Un site qui est d'abord de l'éditorial gagne toujours à séparer le contenu de la présentation."
+          title: "Parler de soi est un exercice à part entière",
+          body: "En tant que développeur, on est entraîné à parler du code, pas de soi. Sur ce portfolio, j'ai dû passer de l'autre côté. Choisir le bon angle, la bonne longueur, le bon niveau de recul sans tomber dans la fausse modestie ni dans l'auto-promo. C'est probablement la chose la plus difficile du projet."
         },
         {
           type: 'lesson',
           title: "Auto-relire à 24h d'intervalle change tout",
-          body: "Plusieurs paragraphes que je trouvais clairs le soir me paraissaient confus le lendemain. Ce décalage d'une journée me rapproche du regard d'un lecteur qui découvre le texte. Je ne mets plus rien en ligne sans cette relecture à froid. C'est le filtre le plus simple et le plus efficace que j'aie trouvé contre les phrases bâclées."
+          body: "Plusieurs paragraphes que je trouvais clairs le soir me paraissaient confus le lendemain. Ce décalage d'une journée me rapproche du regard d'un lecteur qui découvre le texte pour la première fois. Je ne mets plus rien en ligne sans cette relecture à froid. C'est le filtre le plus simple et le plus efficace que j'aie trouvé contre les phrases bâclées."
         },
         {
           type: 'takeaway',
-          title: "Le vrai apprentissage, c'était le recul sur tout le parcours",
-          body: "En racontant chaque projet avec la même grille, j'ai vu apparaître des fils rouges que je n'avais jamais formulés : le passage du code d'école au code de prod chez MacWay, la rigueur de validation qui revient sur mes projets solo, les réflexes que je traîne d'un projet au suivant. Ce regard d'ensemble sur mon propre parcours, aucun projet pris isolément ne me l'avait donné. C'est précisément ce que cet exercice de portfolio m'a apporté."
+          title: "Le vrai apprentissage, c'était le recul sur tout mon parcours",
+          body: "En racontant chaque projet avec la même grille, j'ai vu apparaître des fils rouges que je n'avais jamais formulés. Le passage du code d'école au code de production. La rigueur de validation manuelle qui revient sur mes projets solo. Les réflexes que je traîne d'un projet au suivant, et que je n'avais jamais nommés. Ce regard d'ensemble sur mon propre parcours, c'est précisément ce que cet exercice de portfolio m'a apporté."
         },
       ]
     }
   },
 
   'venalabs': {
-    title: 'VenaLabs - Plateforme Crypto Learning',
-    description: "Plateforme pour apprendre le Web3 et suivre des airdrops crypto avec un système de gamification.",
-    tags: ['Java', 'Spring Boot', 'React', 'Next.js', 'PostgreSQL', 'REST API', 'Amplitude', 'Web3'],
+    title: 'VenaLabs',
+    description: "VenaLabs est une plateforme française d'éducation au Web3 (cours crypto, farming d'airdrops, abonnement premium). J'y ai passé un an en alternance, comme développeur puis lead developer sur la dernière période.",
+    tags: ['Java', 'Spring Boot', 'Next.js', 'TypeScript', 'MongoDB', 'Tailwind', 'Web3', 'Gamification', 'Lead developer'],
     year: '2025-2026',
     logo: 'assets/logos/venalabs.png',
     url: 'https://venalabs.com',
-    presentation: "VenaLabs est une startup Web3 spécialisée dans l'apprentissage de la crypto et l'optimisation des airdrops. Pendant mon alternance d'un an en 2025, j'ai travaillé comme développeur fullstack au sein d'une équipe de 3 développeurs. Le backend repose sur Spring Boot avec une architecture hexagonale, le frontend sur React et Next.js, et la base de données sur PostgreSQL.\n\nJ'ai développé des fonctionnalités clés : le système de Custom Airdrop (création et suivi d'airdrops personnalisés), le leaderboard avec gamification, la Course Map (carte interactive de parcours d'apprentissage), des composants du back-office pour l'équipe marketing, et l'intégration analytics avec Amplitude pour le suivi comportemental des utilisateurs.\n\nLe Web3 et la blockchain, je n'y connaissais rien en arrivant. J'ai dû apprendre les fondamentaux (blockchain, wallets, transactions, smart contracts, tokenomics) en même temps que je livrais du code. En quelques semaines j'étais autonome sur les sujets crypto. C'est la preuve que je sais monter en compétence vite quand le contexte l'exige.",
+    presentation: "VenaLabs est une plateforme française d'éducation au Web3. Elle propose des cours pensés pour les débutants, du contenu autour de l'écosystème crypto, du farming d'airdrops et un abonnement premium. L'idée est d'aider des gens qui découvrent ce monde à se l'approprier sans se faire happer par sa complexité.\n\nJ'y ai passé un an en alternance. L'équipe tech était réduite : moi, une autre alternante plutôt orientée frontend, et notre maître d'apprentissage qui pilotait l'équipe. Autour de nous, une équipe Business en charge des cours et des partenariats, et une équipe Marketing pour la communication. On travaillait principalement à distance, avec des bureaux virtuels sur l'application Work Adventure (l'équivalent d'un open space dans lequel on se croise, où on peut se voir et se parler) et des réunions tous les jours pour caler le travail. Une organisation à taille humaine, avec une vraie proximité entre les équipes.\n\nLe Web3 et la crypto, je n'y connaissais rien en arrivant. Les premières semaines n'ont pas été un défi technique, mais un défi de vocabulaire et de compréhension. Tout un univers avec ses propres mots, ses propres usages, ses propres attentes. J'ai dû apprendre ce que le produit faisait vraiment, à qui il s'adressait, et pourquoi sa communauté venait sur ce genre de plateforme. Sans cette compréhension, le code que je livrais n'aurait pas eu de sens.\n\nLes premiers mois, j'ai contribué à la V2 du produit, qui existait déjà à mon arrivée. Mes premières features ont été côté gamification, notamment un système de classement des utilisateurs par points obtenus, et d'autres fonctionnalités plus petites qui m'ont permis de rentrer dans le code et dans le produit. J'arrivais avec déjà plusieurs années d'expérience derrière moi, tandis que l'autre alternante était encore en licence. Cette différence d'expérience a naturellement pesé dans la suite.\n\nDans les trois à quatre derniers mois, mon maître d'apprentissage a quitté l'entreprise. J'ai naturellement repris son rôle. Les déploiements, la planification technique, les décisions d'architecture, tout est venu sur moi. C'est moi qui planifiais et qui priorisais ce qui était important, en toujours en restant en réunion avec toute l'équipe (pas uniquement la tech) pour valider la direction. Et c'est aussi pendant cette période que j'ai pris le temps d'accompagner l'autre alternante, plus juniore, pour la guider sur ses tâches du quotidien. C'est dans cette période que la grande refonte V3 a pris forme : le chantier le plus structurant que j'ai conduit, et celui qui m'a vraiment fait basculer dans la posture de lead.",
     objectives: {
-      context: "Alternance dans une startup Web3 avec une petite équipe de 2 à 3 développeurs. La plateforme s'adresse aux débutants qui veulent apprendre la crypto et participer à des airdrops. L'équipe travaille en sprints de 2 semaines avec des priorités qui évoluent fréquemment selon les retours utilisateurs et la stratégie produit.",
-      goals: "Développer des fonctionnalités fullstack complexes : système de Custom Airdrop, gamification avec leaderboard, Course Map interactive, back-office et analytics. Contribuer à l'architecture technique et à la qualité du code. Monter en compétence sur le Web3 rapidement.",
-      challenges: "Apprendre le domaine Web3 (blockchain, wallets, airdrops) tout en étant productif. Concevoir des interfaces React complexes avec gestion d'état avancée. Développer un backend Spring Boot sécurisé avec authentification JWT. Intégrer des analytics server-side avec Amplitude. Gérer la complexité d'un système de gamification performant.",
-      risks: "Courbe d'apprentissage du Web3 impactant la productivité. Complexité de la sécurisation des données sensibles (wallets crypto). Performance du leaderboard avec un nombre croissant d'utilisateurs. Adoption de la plateforme par les utilisateurs débutants."
+      context: "Alternance d'un an dans une équipe tech réduite (moi, une autre alternante encore en licence, plutôt orientée frontend, et notre maître d'apprentissage qui pilotait l'équipe), avec les équipes Business et Marketing autour. Travail principalement à distance, avec des bureaux virtuels sur Work Adventure et des réunions tous les jours. Le produit existait déjà en V2 à mon arrivée. J'arrivais sans aucune notion du Web3 ni du vocabulaire crypto, mais avec déjà plusieurs années d'expérience en développement derrière moi.",
+      goals: "M'intégrer dans une équipe tech sur un produit en production. Apprendre le Web3 et son langage from scratch. Contribuer à la V2 existante avec des features de gamification (notamment un système de classement par points). Sur la dernière partie de l'année, après le départ de mon maître d'apprentissage, reprendre la responsabilité technique de l'équipe, accompagner l'autre alternante plus juniore, et conduire la grande refonte V3.",
+      challenges: "Apprendre tout un univers en parallèle des premiers tickets, sans bloquer la livraison. Tenir la qualité côté V2 pendant que la V3 se prépare. Reprendre le rôle de lead sans transition formelle, suite au départ de mon maître d'apprentissage. Accompagner l'autre alternante, encore en licence, sur ses tâches du quotidien.",
+      risks: "Courbe d'apprentissage Web3 freinant les premières semaines. Continuité de l'équipe fragilisée par le départ du maître d'apprentissage. Difficulté à doser l'accompagnement de l'autre alternante sans freiner mes propres livrables. Dérive du chantier V3 si l'architecture n'était pas posée tôt."
     },
     steps: [
-      "Apprentissage des fondamentaux Web3 et blockchain (wallets, transactions, airdrops)",
-      "Développement du système de Custom Airdrop (wizard multi-étapes, API, validation)",
-      "Création de composants back-office pour la gestion des cours et airdrops",
-      "Intégration des analytics Amplitude (tracking serveur, événements structurés, dashboards)",
-      "Développement du leaderboard et du système de gamification (points, niveaux, classement)",
-      "Création de la Course Map interactive (visualisation des parcours, prérequis, progression)"
+      "Premières semaines d'onboarding : apprentissage du vocabulaire crypto, compréhension du produit et de sa communauté",
+      "Contributions à la V2 : système de classement des utilisateurs par points obtenus et autres features de gamification",
+      "Travail à distance avec bureaux virtuels Work Adventure et réunions tous les jours avec toute l'équipe",
+      "Prise du rôle de lead developer dans les derniers mois suite au départ du maître d'apprentissage",
+      "Conduite de la refonte V3 : architecture, design system avec la designeuse freelance, nouvelles features signature",
+      "Planification, priorisation et déploiements, en validant la direction en réunion avec toute l'équipe (pas seulement la tech)",
+      "Accompagnement de l'autre alternante (en licence) sur ses tâches du quotidien"
     ],
-    actors: "Équipe de 3 développeurs fullstack et une équipe marketing. Travail en sprints de 2 semaines avec daily standups, sprint reviews et rétrospectives. Revues de code systématiques et pair programming sur les sujets complexes. Démos régulières à l'équipe marketing.",
+    actors: "Équipe tech réduite (moi, une autre alternante encore en licence et plutôt orientée frontend, et notre maître d'apprentissage qui a quitté l'entreprise dans la dernière partie de l'année), une designeuse freelance engagée pour la refonte V3, une équipe Business (cours et partenariats) et une équipe Marketing (communication, réseaux sociaux). Travail principalement à distance avec des bureaux virtuels Work Adventure pour se voir et se parler au quotidien, et des réunions tous les jours avec toute l'équipe. Dans les derniers mois, prise de la planification et des décisions techniques, en restant systématiquement en réunion avec toute l'équipe pour valider la direction.",
     results: {
-      personal: "J'ai vraiment progressé en Java et Spring Boot sur ce projet. Passer du PHP/Symfony au Java en production, ça m'a forcé à être rigoureux. J'ai aussi découvert le Web3 en partant de zéro et j'ai fini par être à l'aise sur les sujets blockchain. Le travail en petite équipe agile m'a appris à communiquer clairement et à défendre mes choix techniques en sprint review.",
-      business: "Le Custom Airdrop est en production et c'est devenu LA feature qui différencie VenaLabs des concurrents. Le leaderboard a boosté l'engagement : les utilisateurs reviennent pour monter dans le classement. La Course Map a amélioré le taux de complétion des parcours. Le back-office a rendu l'équipe marketing autonome. Ils n'ont plus besoin de nous pour publier du contenu. Et Amplitude leur donne les données pour piloter le produit."
+      personal: "Cette année m'a fait passer du dev qui exécute au lead qui assume les décisions techniques de l'équipe. Sur le plan technique, j'ai progressé sur tout : Java et Spring Boot en production, Next.js, MongoDB, et tout l'univers Web3 que j'ai appris from scratch. Sur le plan humain, j'ai appris à coordonner, à arbitrer, à porter un chantier de refonte d'un bout à l'autre, et à accompagner une alternante plus juniore. La confiance que l'équipe m'a accordée pour reprendre le rôle a été la validation la plus claire de cette progression.",
+      business: "Les features livrées côté V2, dont le système de classement par points, ont alimenté la rétention de la plateforme pendant que la refonte se préparait. La V3 a remis le produit sur des bases solides pour les années qui suivent. La continuité technique a été préservée au départ du maître d'apprentissage, sans rupture de service ni retard sur le calendrier V3."
     },
-    future: "Tout ce que j'ai développé est en production et utilisé au quotidien. L'architecture hexagonale fait que l'équipe peut ajouter des features sans tout casser. Pour moi, cette alternance m'a donné une vraie base fullstack Java/React et une compréhension du Web3 que je peux réutiliser ailleurs.",
-    critique: "La courbe d'apprentissage du Web3 a été plus raide que prévu : j'aurais gagné du temps en structurant mieux mon apprentissage initial plutôt que d'apprendre au fil de l'eau. Certains choix UX du Custom Airdrop étaient trop complexes et ont dû être simplifiés après des tests utilisateurs : une validation UX en amont aurait évité ce travail de refonte. J'aurais aussi dû insister davantage sur l'ajout de tests automatisés dès le départ. Le tracking Amplitude a montré des incohérences dans les premières semaines car le catalogue d'événements n'était pas assez formalisé.",
+    future: "Le travail livré pendant l'année continue d'évoluer sur la base que j'ai posée pendant la V3. Pour moi, cette alternance restera la période où j'ai vraiment basculé : du dev qui exécute des specs au dev qui conçoit, décide et coordonne. Dans un domaine que je découvrais en arrivant, ce qui rend la progression encore plus parlante.",
+    critique: "La courbe d'apprentissage Web3 a été plus raide que prévu. À refaire, je structurerais mon apprentissage différemment, avec une vraie période dédiée en amont plutôt qu'au fil de l'eau. La transition vers le rôle de lead s'est faite brusquement, sans passation formelle puisque mon maître d'apprentissage partait. J'ai dû reprendre plusieurs dossiers en cours d'eau. À refaire, je demanderais un point structuré beaucoup plus tôt sur ce que je devais reprendre, plutôt que de tout découvrir au fil des semaines. Enfin, l'accompagnement de l'autre alternante m'a parfois pris plus de temps que prévu sur mes propres livrables. Avec plus de recul, j'aurais formalisé un cadre clair de revue plutôt que de répondre au fil de l'eau.",
     relatedSkills: ['spring-boot', 'react-nextjs', 'nextjs', 'docker', 'collaboration-agile', 'autonomie-resolution'],
     majorTasks: [
       {
-        title: "1. Système de Custom Airdrop",
-        context: "Fonctionnalité clé permettant aux utilisateurs de créer, configurer et suivre leurs propres airdrops personnalisés. Le système implique un wizard multi-étapes côté frontend React et des endpoints Spring Boot sécurisés côté backend.",
+        title: "1. Système de classement par points et premières features V2",
+        context: "Mes premières contributions sur Airdroped, encore en V2 à mon arrivée. Le but : mettre en place un système de classement des utilisateurs en fonction des points qu'ils obtenaient sur la plateforme, et plus largement contribuer à la couche de gamification existante. Côté apprentissage, c'est aussi la période où je découvrais le code, le produit et tout le vocabulaire crypto en parallèle.",
         steps: [
-          "Conception du modèle de données (entités JPA : Airdrop, Step, Reward, Progress)",
-          "Développement des endpoints REST avec validation et sécurité JWT",
-          "Création du wizard multi-étapes React avec hooks personnalisés et React Query",
-          "Implémentation de la validation automatique de progression",
-          "Simplification de l'UX après retours des tests utilisateurs",
-          "Gestion de l'optimistic update pour une UX fluide"
+          "Découverte de la base de code V2 et de ses conventions, en parallèle de l'apprentissage du vocabulaire crypto",
+          "Conception du système de classement : récupération des points par utilisateur, agrégation et tri",
+          "Mise en place de la pagination et du cache pour que le classement reste réactif avec un nombre croissant d'utilisateurs",
+          "Tâche planifiée de recalcul régulier pour intégrer les nouvelles actions sans tout recalculer à chaque appel",
+          "Coordination des features de gamification avec l'autre alternante via des réunions régulières"
         ],
-        result: "Fonctionnalité en production utilisée quotidiennement. Le Custom Airdrop est devenu une feature différenciante de VenaLabs. L'UX simplifiée a amélioré le taux de complétion des airdrops.",
-        learning: "Tester l'UX avec de vrais utilisateurs avant de finaliser le code évite de refaire le travail deux fois. Et l'optimistic update, ça change tout pour la fluidité perçue."
+        result: "Système de classement opérationnel et intégré au produit V2. Premières briques de gamification livrées, qui ont alimenté la rétention de la plateforme pendant que la V3 se préparait.",
+        learning: "Cette première période m'a appris à entrer dans un code existant et dans un domaine inconnu en même temps. La leçon : ne pas attendre de tout comprendre avant de livrer. Apprendre en faisant, mais avec l'humilité de poser les bonnes questions au bon moment."
       },
       {
-        title: "2. Back-Office d'administration",
-        context: "Donner plus d'autonomie aux équipes marketing et produit pour gérer les cours, les airdrops et les contenus sans intervention des développeurs.",
+        title: "2. Prise du rôle de lead developer",
+        context: "Mon maître d'apprentissage a quitté l'entreprise dans les trois à quatre derniers mois de mon alternance. J'ai naturellement repris le rôle de lead developer de l'équipe : déploiements, planification technique, arbitrages et décisions d'architecture sont passés sur moi.",
         steps: [
-          "Analyse des besoins avec l'équipe marketing (CRUD cours, airdrops, utilisateurs)",
-          "Développement des composants d'administration React avec formulaires dynamiques",
-          "Implémentation des endpoints d'administration Spring Boot avec autorisation ADMIN",
-          "Sécurisation des accès avec rôles et permissions JWT",
-          "Formation de l'équipe marketing à l'utilisation du back-office"
+          "Reprise des dossiers en cours laissés par mon maître d'apprentissage (architecture en place, choix techniques engagés, livrables prévus)",
+          "Prise en main des déploiements en production et des opérations techniques quotidiennes",
+          "Planification des sprints et arbitrage des priorités avec l'autre alternante et les équipes Business et Marketing",
+          "Décisions d'architecture sur les chantiers en cours et à venir, en particulier sur la refonte V3 qui démarrait",
+          "Coordination directe avec les équipes métier sur les besoins de la plateforme (Business pour les cours et partenariats, Marketing pour la communication)"
         ],
-        result: "L'équipe marketing gère les contenus en autonomie. On n'a plus de tickets pour publier un cours ou un airdrop. Les temps de publication sont passés de plusieurs jours à quelques minutes.",
-        learning: "Former les utilisateurs du back-office est aussi important que le développer. Un outil mal compris sera sous-utilisé."
+        result: "Continuité technique préservée sans rupture pour l'équipe et pour le produit. L'équipe a continué à livrer normalement, et le calendrier de la refonte V3 a pu être tenu. La confiance qui m'a été accordée pour reprendre ce rôle a confirmé la progression acquise pendant l'année.",
+        learning: "Reprendre un rôle de lead sans transition formelle, c'est apprendre à décider vite, à assumer ses choix, et à demander de l'aide intelligemment. La technique n'est qu'une partie du métier. La coordination, la priorisation et la communication en sont l'autre moitié, et cette période me l'a appris en accéléré."
       },
       {
-        title: "3. Analytics avec Amplitude (tracking serveur)",
-        context: "Comprendre comment les utilisateurs interagissent avec la plateforme pour prendre des décisions produit basées sur des données concrètes plutôt que sur l'intuition.",
+        title: "3. Refonte V3 : architecture et design system",
+        context: "Airdroped V2 vieillissait, à la fois côté visuel et côté code. La V3 a été pensée comme une refonte structurelle complète : nouvelle identité visuelle, nouvelle architecture, conventions explicites tenues d'un bout à l'autre. C'est moi qui ai porté la conception et la mise en place de cette nouvelle architecture, en coordination étroite avec la designeuse freelance engagée spécifiquement pour la refonte visuelle.",
         steps: [
-          "Définition d'un catalogue d'événements structuré avec propriétés standardisées",
-          "Intégration du SDK Amplitude côté backend Spring Boot (tracking serveur)",
-          "Envoi asynchrone des événements pour ne pas impacter les performances",
-          "Création de dashboards Amplitude pour l'équipe produit et marketing",
-          "Itération sur le catalogue d'événements après les premières analyses"
+          "Cadrage de l'architecture cible avec un pattern feature-based strict (api / core / comp / service / store par feature)",
+          "Construction du design system V3 côté front : tokens couleur centralisés en classes Tailwind, iconographie unifiée, variantes responsive custom",
+          "Définition du pattern back-end équivalent : RequestJson → Controller → Service → Model → Repository, mappers Model ↔ JSON",
+          "Migration progressive des écrans et modules vers la nouvelle architecture pour éviter le big bang risqué",
+          "Refonte complète de la page Discover comme hub unifié (airdrops, routines, cours) avec cards hero et filtres par écosystème",
+          "Conventions de nommage explicites et documentées pour que l'équipe puisse continuer dans la même direction sans moi"
         ],
-        result: "Décisions produit basées sur les données réelles d'utilisation. Identification de parcours utilisateurs à optimiser. L'équipe marketing peut suivre l'impact de ses campagnes directement.",
-        learning: "Le tracking doit être formalisé dès le début (catalogue d'événements) pour éviter les incohérences. Le tracking serveur est plus fiable que le tracking client (pas bloqué par les adblockers)."
+        result: "Architecture stricte tenue sur plus de 40 modules backend et plus de 200 composants V3 côté front. Nouvelle identité visuelle déployée sur toutes les surfaces. L'équipe peut ajouter une nouvelle feature en suivant un schéma clair, sans renégocier les conventions à chaque fois.",
+        learning: "Sur un projet de cette ampleur, l'architecture ne se résume pas à un diagramme : c'est un ensemble de conventions tenues dans la durée. Le vrai travail de lead, c'est de poser ces conventions tôt et de les tenir même quand un sprint serre."
       },
       {
-        title: "4. Leaderboard et gamification",
-        context: "Stimuler l'engagement des utilisateurs grâce à un système de points, niveaux et classement. Le défi technique est de maintenir des performances acceptables avec un nombre croissant d'utilisateurs.",
+        title: "4. Battle Pass saisonnier dynamique (V3)",
+        context: "Construire un système de progression saisonnier inspiré des jeux AAA, mais adapté au contexte Web3 : double track free/premium, missions à cadences multiples, claims atomiques, et surtout des saisons configurables dynamiquement sans nouveau code à chaque cycle.",
         steps: [
-          "Conception du système de scoring avec règles pondérées (type d'action, difficulté, régularité)",
-          "Développement du service Spring Boot de calcul de scores et classement",
-          "Optimisation des requêtes SQL avec pagination et cache pour le classement",
-          "Mise en place d'un scheduled task de recalcul horaire",
-          "Développement de l'interface React avec animations de progression"
+          "Modélisation des entités (BattlePassSeason, BattlePassTier, BattlePassMission) avec dates de début/fin et tiers progressifs",
+          "Mise en place du double track : chaque palier débloque une récompense free et une récompense premium",
+          "Missions à cadence multiple (daily, weekly, monthly, seasonal) avec reset automatique calculé à la demande",
+          "Triggers événementiels : un service écoute les événements métier (airdrop complété, cours terminé) et incrémente la mission concernée",
+          "Claims atomiques en une opération MongoDB pour empêcher toute double-distribution, sans lock applicatif",
+          "Outillage admin pour que l'équipe Business puisse créer une nouvelle saison en autonomie : durée, paliers, récompenses"
         ],
-        result: "Augmentation de l'engagement et de la rétention des utilisateurs. Le temps passé sur la plateforme et le taux de complétion des cours ont augmenté. Le classement reste performant avec la pagination et le cache.",
-        learning: "La gamification doit rester motivante pour tous les niveaux : les nouveaux utilisateurs ne doivent pas être découragés par un écart trop grand avec les leaders."
+        result: "Battle Pass en production, qui rythme la vie de la plateforme. L'équipe Business lance les nouvelles saisons sans solliciter la tech, en choisissant ses récompenses et son calendrier. Aucun incident de double-claim malgré le trafic.",
+        learning: "Concevoir un système saisonnier vraiment dynamique demande un investissement initial plus lourd qu'une version figée. Mais c'est ce qui libère ensuite l'équipe métier et qui donne au système sa durée de vie. Penser dynamique dès le départ, c'est une décision qui paie dans la durée."
       },
       {
-        title: "5. Course Map interactive",
-        context: "Visualiser le parcours d'apprentissage sous forme de carte interactive où chaque cours est un nœud avec des prérequis, un état de progression et des connexions visuelles.",
+        title: "5. Système de boxes et drop pools (V3)",
+        context: "Concevoir le moteur central de gamification : des boxes ouvrables contenant des récompenses tirées au sort selon des probabilités configurables. Huit types de récompenses possibles, des photos de profil à plusieurs tiers visuels, et un tirage qui doit rester équitable et fiable.",
         steps: [
-          "Conception de la structure de données des parcours (nœuds, arêtes, prérequis)",
-          "Développement des composants React interconnectés avec gestion des dépendances",
-          "Implémentation de la progression visuelle (cours débloqués, en cours, complétés)",
-          "Édition via le back-office (ajout/modification de cours et prérequis)",
-          "Animations de transition et feedback visuel sur la complétion"
+          "Picker avec précision décimale jusqu'à 0,0001 % sur les probabilités, avec validation côté admin que la somme du pool fait exactement 100 %",
+          "Huit types de drops gérés (VenaPoints, XP, coffres, fragments, streak savers, boosters, boxes imbriquées, photos de profil), chacun routé vers son service dédié",
+          "Mode de quantité par drop : montant fixe ou intervalle (roll uniforme dans la plage) selon la configuration",
+          "Système de photos de profil à plusieurs tiers visuels (V3 / V4 / V5) avec foils et covers, déterminés par la rareté tirée",
+          "Déduplication naturelle des avatars par clé stable d'image : la même image tirée depuis plusieurs boxes ne crée qu'un seul Avatar en inventaire",
+          "Effet de cascade : un drop peut être une box, qui atterrit dans l'inventaire et peut être ouverte à son tour"
         ],
-        result: "Meilleur taux de complétion des parcours grâce à la visualisation claire de la progression. Les utilisateurs comprennent mieux l'ordre d'apprentissage et les prérequis.",
-        learning: "Les dépendances entre contenus doivent être bien contrôlées : un prérequis mal configuré peut bloquer tout un parcours. La visualisation de la progression est un puissant motivateur."
+        result: "Système en production, devenu le moteur de rétention de la plateforme. Probabilités configurables finement côté admin, sans risque de double-distribution ou d'incohérence des marges. Les utilisateurs ouvrent leurs boxes avec des animations soignées et un système de tiers visuels qui crée un vrai effet de collection.",
+        learning: "Les systèmes de drop probabilistes sont des aimants à bugs subtils : une décimale mal arrondie ou un picker non déterministe peut casser l'équité du tirage. La rigueur sur les types et la précision décimale m'a obligé à être méthodique d'une manière nouvelle."
       }
     ],
 
-    // === RICH CONTENT (v2 layout). Alternance startup, thème violet, projet texte d'abord (pas de bandeau chiffres) ===
+    // === RICH CONTENT (v2 layout). Une année chez VenaLabs, thème peach. Du junior qui découvre le Web3 au lead developer de l'équipe ===
     rich: {
-      theme: 'violet',
-      tagline: "Un an d'alternance en startup Web3. J'y suis arrivé sans rien connaître à la crypto, j'en suis sorti à l'aise sur le sujet et sur le métier d'équipe.",
+      theme: 'peach',
+      tagline: "Du junior qui découvre le Web3 au lead developer de l'équipe, en une année d'alternance.",
       presentation: [
-        "J'ai effectué mon alternance d'un an chez VenaLabs en 2025, une startup Web3 qui aide les débutants à apprendre la crypto et à participer à des airdrops. J'y ai été développeur fullstack au sein d'une petite équipe de 3 développeurs, en lien direct avec le lead technique, le PM et l'équipe marketing produit.",
-        "Côté technique, le backend tourne sous Spring Boot 3 avec une architecture hexagonale, le frontend sous React et Next.js, et la persistance sur PostgreSQL. J'ai pris en charge des fonctionnalités à fort impact métier : le système de Custom Airdrop (création et suivi d'airdrops personnalisés), le leaderboard avec gamification, la Course Map (visualisation interactive des parcours d'apprentissage), plusieurs écrans du back-office pour l'équipe marketing, et l'intégration de l'analytics serveur avec Amplitude.",
-        "Avant d'arriver, je n'avais aucune notion concrète de Web3. Wallets, transactions on-chain, smart contracts, airdrops, tokenomics. J'ai tout appris en livrant. Le vrai défi des premières semaines n'était pas la technique mais ça : comprendre assez le contexte business pour livrer des features qui ont du sens, pas juste qui compilent. Ça m'a forcé à structurer mon apprentissage et à demander de l'aide intelligemment, parce qu'attendre de tout comprendre avant de coder n'était pas une option."
+        "VenaLabs est une plateforme française d'éducation au Web3. Elle propose des cours pensés pour les débutants, du contenu autour de l'écosystème crypto, du farming d'airdrops et un abonnement premium. L'idée est d'aider des gens qui découvrent ce monde à se l'approprier sans se faire happer par sa complexité.",
+        "J'y ai passé un an en alternance. L'équipe tech était réduite : moi, une autre alternante encore en licence et plutôt orientée frontend, et notre maître d'apprentissage qui pilotait l'équipe. Autour de nous, une équipe Business en charge des cours et des partenariats, et une équipe Marketing pour la communication. On travaillait principalement à distance, avec des bureaux virtuels sur l'application Work Adventure (l'équivalent d'un open space où on se croise, où on peut se voir et se parler) et des réunions tous les jours. Une organisation à taille humaine, avec une vraie proximité entre les équipes.",
+        "Le Web3 et la crypto, je n'y connaissais rien en arrivant. Les premières semaines n'ont pas été un défi technique, mais un défi de vocabulaire et de compréhension. Tout un univers avec ses propres mots, ses propres usages, ses propres attentes. J'ai dû apprendre ce que le produit faisait vraiment, à qui il s'adressait, et pourquoi sa communauté venait sur ce genre de plateforme. Sans cette compréhension, le code que je livrais n'aurait pas eu de sens.",
+        "Les premiers mois, j'ai contribué à la V2 du produit, qui existait déjà à mon arrivée. Mes premières features ont tourné autour de la gamification, notamment un système de classement des utilisateurs par points obtenus, et plusieurs autres fonctionnalités plus petites qui m'ont permis de rentrer dans le code et dans le produit. J'arrivais avec déjà plusieurs années d'expérience en développement derrière moi, ce qui m'a permis de progresser vite sur les sujets structurants.",
+        "Dans les trois à quatre derniers mois, mon maître d'apprentissage a quitté l'entreprise. J'ai naturellement repris son rôle : déploiements, planification, décisions d'architecture, accompagnement de l'autre alternante au quotidien. C'est dans cette période que la grande refonte V3 a pris forme, le chantier le plus structurant que j'ai conduit. Ce que je retiens de cette année, ce n'est pas une feature en particulier : c'est cette progression et la confiance que l'équipe m'a accordée pour reprendre le rôle."
       ],
       objectives: [
-        "Développer des fonctionnalités fullstack à fort impact métier (Custom Airdrop, leaderboard, Course Map)",
-        "Contribuer à l'architecture hexagonale du backend Spring Boot et à sa robustesse",
-        "Construire et faire évoluer le back-office pour donner de l'autonomie à l'équipe marketing",
-        "Mettre en place le tracking serveur Amplitude pour piloter le produit par la donnée",
-        "Monter en compétence sur l'écosystème Web3 (blockchain, wallets, airdrops) sans bloquer la livraison",
-        "M'intégrer dans un fonctionnement Scrum réel (pas théorique) avec sprints, démos et rétrospectives"
+        "M'intégrer dans une équipe tech sur un produit en production",
+        "Apprendre le Web3 from scratch et comprendre les attentes de sa communauté avant de coder",
+        "Contribuer à la V2 existante via des features de gamification (système de classement par points)",
+        "Reprendre la responsabilité technique de l'équipe au départ du maître d'apprentissage",
+        "Conduire la refonte V3 en tant que lead developer, du cadrage à la mise en production",
+        "Accompagner l'autre alternante, plus juniore, sur ses tâches du quotidien"
       ],
       context: {
-        period: "Janvier à Décembre 2025 (12 mois)",
-        framework: "Alternance développeur fullstack",
-        mode: "Hybride (présentiel / remote selon les sprints)",
+        period: "Un an d'alternance entre 2025 et 2026, dont les trois à quatre derniers mois comme lead developer après le départ de mon maître d'apprentissage",
+        framework: "Alternance développeur chez VenaLabs, plateforme française d'éducation au Web3 et à la crypto",
+        mode: "Principalement à distance, via bureaux virtuels Work Adventure",
         team: [
-          { role: "Moi", description: "Développeur fullstack alternant. Java / Spring Boot, React / Next.js, intégration Web3, analytics, écrans back-office." },
-          { role: "Lead développeur", description: "Référent technique sur l'architecture, code reviews critiques et pair programming sur les sujets nouveaux. C'est de lui que j'ai le plus appris au quotidien." },
-          { role: "Développeur fullstack collègue", description: "Collaboration au quotidien sur les sprints, revues de code croisées, répartition front / back sur les features partagées." },
-          { role: "Product Manager", description: "Priorisation du backlog, animation des sprints (planning, review, rétro), arbitrage des demandes marketing." },
-          { role: "Équipe marketing produit (2-3 personnes)", description: "Validation des écrans back-office, demandes d'évolution sur les dashboards Amplitude, démos hebdo." },
-          { role: "Designer (freelance ponctuel)", description: "Maquettes Figma sur les features critiques. Sa présence a fait la différence. Quand il n'était pas là, on a payé en refactor (V1 du Custom Airdrop)." }
+          { role: "Moi", description: "Alternant développeur, puis lead developer sur la dernière partie de l'année." },
+          { role: "Autre alternante (en licence, plutôt frontend)", description: "Binôme dev au quotidien, sur les composants UI." },
+          { role: "Maître d'apprentissage", description: "Pilotait l'équipe tech jusqu'à son départ en cours d'année." }
         ],
         organization: [
-          "Sprints Scrum de 2 semaines",
-          "Daily standups quotidiens de 15 minutes",
-          "Sprint planning, sprint review et rétrospective à chaque cycle",
+          "Réunions quotidiennes avec toute l'équipe (tech, Business, Marketing) pour caler la suite",
           "Code reviews systématiques avant tout merge",
-          "Pair programming sur les sujets nouveaux (blockchain, scoring, intégrations critiques)",
-          "Démos hebdo à l'équipe marketing pour valider les fonctionnalités en cours",
-          "Jira pour le suivi des tickets et l'estimation en story points"
+          "Démos régulières aux équipes Business et Marketing pour valider les features en cours",
+          "Coordination étroite avec la designeuse freelance pendant la refonte V3",
+          "Conventions d'architecture et de nommage documentées sur la V3",
+          "Sur la dernière période, planification et priorisation portées par moi, validées en réunion d'équipe complète"
         ],
         stack: [
-          { label: "Backend", value: "Java 21, Spring Boot 3, Spring Data JPA, Spring Security, architecture hexagonale" },
-          { label: "Frontend", value: "React 18, Next.js, TypeScript, React Query, hooks personnalisés" },
-          { label: "Base de données", value: "PostgreSQL avec migrations versionnées" },
-          { label: "Auth", value: "JWT signé (rôles USER / ADMIN / MODERATOR)" },
-          { label: "Analytics", value: "Amplitude en tracking serveur (non bloqué par les adblockers)" },
-          { label: "DevOps", value: "Docker, CI/CD" },
-          { label: "Gestion projet", value: "Jira" }
+          { label: "Backend", value: "Java 22, Spring Boot 3.3, MongoDB, architecture feature-based stricte (Controller / Service / Mapper / Model / Repository)" },
+          { label: "Frontend", value: "Next.js 14 (App Router), TypeScript, Tailwind, Framer Motion, Zustand pour le state local par feature" },
+          { label: "Auth", value: "JWT stateless, public endpoints isolés, rôles différenciés" },
+          { label: "Paiements", value: "Stripe (abonnements premium + items consommables)" },
+          { label: "Stockage", value: "Azure Blob pour les médias et les avatars" },
+          { label: "Emails", value: "Mailjet (transactionnels + onboarding)" },
+          { label: "Outils collaboratifs", value: "Work Adventure pour les bureaux virtuels et la communication quotidienne en remote" },
+          { label: "DevOps", value: "Docker, déploiement automatisé" }
         ],
         stakes: [
-          "Plateforme à mission éducative. Chaque friction freine l'apprentissage des utilisateurs débutants en crypto",
-          "Différenciation produit dans un marché concurrentiel par des features uniques (Custom Airdrop) et un produit fluide",
-          "Première vraie expérience fullstack pour moi avec responsabilité sur des features livrées en production",
-          "Crédibilité technique de la startup auprès de partenaires Web3 pour des intégrations futures"
+          "Une plateforme en production utilisée par une vraie communauté. Chaque feature compte directement sur leur expérience",
+          "Continuité de l'équipe technique au départ du maître d'apprentissage, avec une refonte d'ampleur en cours",
+          "Repartir d'une V2 vieillie avec une refonte structurelle (V3) qui tienne plusieurs années, pas un simple lifting",
+          "Différenciation produit dans un marché Web3 concurrentiel par une gamification poussée et une expérience pensée pour les débutants",
+          "Première prise de rôle de lead pour moi. Responsabilité directe sur les choix d'architecture qui engagent l'équipe sur la durée"
         ],
         risks: [
-          "Courbe d'apprentissage Web3 raide impactant la productivité initiale",
-          "Sécurité des données utilisateurs (wallets crypto = sujet sensible, même sans gestion de fonds directe)",
-          "Performance du leaderboard avec un nombre croissant d'utilisateurs (calculs fréquents)",
-          "Adoption par des utilisateurs débutants. UX critique sur les flows complexes (airdrops, parcours)",
-          "Pivots fréquents en startup, scope qui change parfois en cours de sprint",
-          "Manque initial de tests automatisés sur les services backend critiques (scoring, calculs financiers)"
+          "Difficulté à entrer dans le domaine (vocabulaire, usages, attentes de la communauté) freinant la livraison les premières semaines",
+          "Continuité de l'équipe fragilisée par le départ du maître d'apprentissage en cours d'année",
+          "Reprise du rôle de lead sans transition formelle, avec plusieurs dossiers en cours à reprendre rapidement",
+          "Difficulté à doser l'accompagnement de l'autre alternante sans freiner mes propres livrables",
+          "Dérive du chantier V3 si l'architecture n'est pas posée tôt et tenue. Le piège classique d'une V3 qui finit comme la V2"
         ]
       },
       steps: [
         {
-          title: "Onboarding et apprentissage Web3",
-          description: "Premières semaines : prise en main du code et apprentissage du domaine en parallèle, sans bloquer la livraison",
+          title: "Onboarding : apprendre le produit avant d'apprendre la tech",
+          description: "Premières semaines : comprendre ce qu'est VenaLabs, qui sont ses utilisateurs et pourquoi ils viennent, avant de toucher au code",
           bullets: [
-            "Découverte de la stack et de la base de code existante (architecture hexagonale, conventions internes)",
-            "Apprentissage des fondamentaux crypto via la documentation Ethereum et les ressources internes",
-            "Création d'un wallet personnel et tests de transactions sur testnets pour comprendre l'expérience utilisateur de l'intérieur",
-            "Premières contributions sur des sujets non-Web3 (composants UI, écrans back-office) pour être productif rapidement",
-            "Pair programming avec le lead développeur sur les sujets blockchain pour combler les zones d'ombre"
+            "Découverte du vocabulaire crypto et du fonctionnement de l'écosystème, à partir de zéro",
+            "Lecture des cours du produit lui-même pour me mettre à la place d'un utilisateur débutant",
+            "Échanges réguliers avec l'équipe pour comprendre les usages, la communauté, les attentes des abonnés",
+            "Découverte de la base de code V2 existante, repérage des modules et des conventions internes",
+            "Premières contributions sur des sujets simples pour être productif pendant que je montais en compétence sur le domaine"
           ]
         },
         {
-          title: "Custom Airdrop. Feature différenciante",
-          description: "Conception et livraison du système qui permet à un utilisateur de créer et de suivre ses propres airdrops personnalisés",
+          title: "Contributions à la V2 et premières features de gamification",
+          description: "Mes premiers vrais livrables sur le produit, dont un système de classement des utilisateurs par points",
           bullets: [
-            "Modélisation des entités JPA (Airdrop, Step, Reward, Progress) avec relations Doctrine claires",
-            "Endpoints REST sécurisés JWT côté Spring Boot, avec validation et gestion d'erreurs structurée",
-            "Wizard multi-étapes côté React avec hooks personnalisés et React Query pour la synchro",
-            "Implémentation de l'optimistic update pour une UX fluide malgré la latence backend",
-            "Tests utilisateurs internes : la V1 du wizard avait 6 étapes, on est descendu à 3 après retours"
+            "Conception et développement d'un système de classement des utilisateurs en fonction des points qu'ils obtenaient sur la plateforme",
+            "Plusieurs features secondaires de gamification (incentives, affichages de progression, ajustements UX)",
+            "Optimisation des requêtes et mise en cache pour que le classement reste réactif avec un nombre croissant d'utilisateurs"
+            
           ]
         },
         {
-          title: "Back-office d'administration",
-          description: "Donner de l'autonomie à l'équipe marketing pour gérer le contenu sans solliciter les développeurs",
+          title: "Prise du rôle de lead developer",
+          description: "Dans les trois à quatre derniers mois, mon maître d'apprentissage quitte l'entreprise. Je reprends le rôle",
           bullets: [
-            "Analyse des besoins en réunion avec le marketing (qui faisait quoi, quels frictions actuelles)",
-            "Développement des écrans CRUD (cours, airdrops, utilisateurs) avec formulaires React dynamiques",
-            "Sécurisation des endpoints d'administration avec rôles ADMIN et MODERATOR via Spring Security",
-            "Formation de l'équipe marketing à l'outil. Sinon il aurait été sous-utilisé, peu importe sa qualité"
+            "Reprise des dossiers en cours laissés par mon maître d'apprentissage (choix techniques engagés, livrables prévus, organisation interne)",
+            "Prise en main des déploiements en production et des opérations techniques quotidiennes",
+            "Planification et priorisation des sujets, portées par moi mais validées en réunion avec toute l'équipe",
+            "Accompagnement de l'autre alternante, encore en licence, pour la guider sur ses tâches du quotidien",
+            "Coordination directe avec les équipes Business et Marketing sur leurs besoins, sans intermédiaire entre la tech et le produit",
+            "Décisions d'architecture sur les chantiers en cours et à venir, en particulier sur la refonte V3 qui démarrait"
           ]
         },
         {
-          title: "Analytics serveur avec Amplitude",
-          description: "Mettre en place un tracking fiable pour piloter le produit par la donnée plutôt que par l'intuition",
+          title: "Cadrage de la refonte V3",
+          description: "Le chantier le plus structurant de l'année. Poser une architecture qui tienne plusieurs années",
           bullets: [
-            "Définition d'un catalogue d'événements structuré dans un Google Doc partagé (avant le code). Démarche acquise après une première reprise",
-            "Intégration du SDK Amplitude côté backend Spring Boot. Tracking serveur, non bloqué par les adblockers",
-            "Envoi asynchrone des événements pour ne pas impacter les latences API",
-            "Dashboards Amplitude créés avec l'équipe produit et marketing pour des KPIs lisibles",
-            "Reprise complète du catalogue après 3 mois suite à des incohérences détectées dans les analyses"
+            "Cadrage de l'architecture cible côté front comme côté back, avec un pattern d'organisation par feature strict et tenu sur la durée",
+            "Construction du design system V3 main dans la main avec la designeuse freelance engagée pour la refonte visuelle complète",
+            "Conventions de nommage et règles d'organisation documentées pour que l'équipe puisse continuer dans la même direction",
+            "Choix techniques structurants pris en concertation avec l'équipe, puis assumés comme lead",
+          ],
+          annexLink: true
+        },
+        {
+          title: "Battle Pass saisonnier dynamique (V3)",
+          description: "Concevoir un système de progression saisonnier que l'équipe Business peut piloter sans solliciter la tech",
+          bullets: [
+            "Modélisation d'un système de saisons avec paliers progressifs, récompenses différenciées et missions à cadences multiples (quotidiennes, hebdomadaires, mensuelles, saisonnières)",
+            "Double track gratuit / premium : chaque palier débloque une récompense accessible à tous et une réservée aux abonnés",
+            "Récompenses distribuées de façon atomique pour empêcher toute double-distribution, sans verrou applicatif",
+            "Outillage admin complet pour que la création d'une nouvelle saison soit une affaire de configuration, pas de code à pousser"
           ]
         },
         {
-          title: "Leaderboard et gamification",
-          description: "Stimuler la rétention par un système de points, niveaux et classement, sans dégrader les performances",
+          title: "Système de boxes et drop pools (V3)",
+          description: "Construire le moteur central de récompense, avec des probabilités finement configurables et plusieurs types de drops",
           bullets: [
-            "Conception du système de scoring avec règles pondérées (type d'action, difficulté, régularité)",
-            "Service Spring Boot de calcul de scores et de classement avec requêtes SQL optimisées",
-            "Pagination et cache pour que le leaderboard tienne la charge avec un nombre croissant d'utilisateurs",
-            "Scheduled task de recalcul horaire pour intégrer les nouvelles actions sans recalcul à chaque appel",
-            "Frontend React avec animations de progression pour rendre la gamification motivante visuellement"
-          ]
-        },
-        {
-          title: "Course Map interactive",
-          description: "Visualiser le parcours d'apprentissage pour augmenter le taux de complétion des cours",
-          bullets: [
-            "Modélisation des parcours en graphe (nœuds = cours, arêtes = prérequis)",
-            "Composants React interconnectés gérant les dépendances entre cours côté client",
-            "Édition via le back-office (ajout / modification de cours et de prérequis)",
-            "Animations de transition pour rendre la progression visible et motivante",
-            "Tests d'usage avec de vrais utilisateurs internes. Ajustements après observation directe"
+            "Tirages aléatoires basés sur des probabilités configurables très finement par les administrateurs",
+            "Huit types de récompenses possibles (points, expérience, coffres, photos de profil, boosters, etc.)",
+            "Photos de profil à plusieurs niveaux de rareté visuelle, avec un système de collection pour les utilisateurs",
+            "Boxes imbriquées : un tirage peut donner une autre box, qui peut elle-même être ouverte. Effet cascade côté utilisateur"
           ]
         }
       ],
       actors: [
         {
-          role: "Lead développeur",
-          description: "Référent technique sur l'architecture hexagonale et les choix de stack. Validait mes décisions importantes en code review et m'accompagnait en pair programming sur les sujets nouveaux (blockchain, scoring). C'est de lui que j'ai le plus appris sur le quotidien d'un dev senior. Comment il découpe un problème, comment il argue ses choix."
+          role: "Maître d'apprentissage",
+          description: "Mon référent technique pendant les premiers mois. C'est lui qui m'a accompagné dans la prise en main du code, du produit et du domaine crypto. Sa manière de poser un problème, de l'instruire avant de coder, est ce qui m'a le plus marqué. Sans cet accompagnement initial, je n'aurais pas pu reprendre la suite aussi vite à son départ."
         },
         {
-          role: "Développeur fullstack collègue",
-          description: "Collaboration au quotidien sur les sprints, revues de code croisées, échanges de bonnes pratiques. Sur les features partagées comme le back-office, on s'est réparti le travail front / back avec une coordination étroite et beaucoup de déblocages mutuels."
+          role: "Autre alternante",
+          description: "Revues de code croisées et déblocages mutuels au quotidien sur les sujets en cours, avec une répartition naturelle (elle sur l'UI, moi sur l'architecture et le back). Une fois mon maître d'apprentissage parti, je l'ai accompagnée sur ses tâches : c'est la première fois que je portais ce rôle de guide pour une personne plus juniore que moi."
         },
         {
-          role: "Product Manager",
-          description: "Pilote la priorisation du backlog et l'animation des sprints. C'est avec lui que j'ai appris à estimer en story points, à découper une feature en tickets actionnables et à challenger les besoins quand ils étaient flous, plutôt que de coder une spec ambiguë."
+          role: "Designeuse freelance (refonte V3)",
+          description: "Engagée pour la refonte V3 : nouvelle identité visuelle complète et design system de bout en bout. Sa contribution a structuré tout le chantier. Travailler avec elle m'a appris à dialoguer côté front sur ce qui est réalisable proprement, plutôt qu'à improviser une demi-solution une fois la maquette livrée."
         },
         {
-          role: "Équipe marketing produit",
-          description: "Validait les écrans back-office et formulait les besoins d'analytics. C'est avec eux que j'ai appris à vulgariser le technique : passer de « POST /api/airdrops » à « le bouton créer un airdrop » a été un vrai changement de posture, et c'est devenu un réflexe."
+          role: "Équipe Business",
+          description: "En charge des cours et des partenariats. C'est avec eux que je calibrais les fonctionnalités qui devaient devenir des leviers business (saisons du Battle Pass, drops, contenus). Leurs demandes ont structuré ma façon de penser le tooling admin : si une équipe métier doit appeler la tech à chaque action, on a raté quelque chose."
         },
         {
-          role: "Designer (freelance ponctuel)",
-          description: "Intervenait sur les features critiques avec des maquettes Figma. Quand il était présent, l'UX était validée avant le code et tout allait plus vite. Quand il n'était pas là, on improvisait. Et on l'a payé en refactor de la V1 du Custom Airdrop. Une vraie leçon sur la valeur du design en amont."
-        },
-        {
-          role: "Utilisateurs internes (testeurs)",
-          description: "Quelques membres de l'équipe non-tech testaient les features avant le push en prod. Leurs retours, surtout celui sur le wizard du Custom Airdrop trop complexe, ont été parmi les plus précieux du projet."
+          role: "Équipe Marketing",
+          description: "En charge des réseaux sociaux et de la communication. C'est elle qui portait la V3 à l'extérieur. Nos échanges m'ont appris à formuler ce qu'on livrait en termes utilisables pour leur communication, pas en termes techniques internes. Une feature mal présentée passe inaperçue, peu importe la qualité du code."
         }
       ],
       results: {
         personal: {
           technical: [
-            "Spring Boot en production : architecture hexagonale, JPA, Security, traitements asynchrones, scheduled tasks",
-            "React et Next.js avec gestion d'état avancée (React Query, hooks personnalisés, optimistic update)",
-            "Tracking serveur avec Amplitude et catalogue d'événements structuré",
-            "Web3 fondamentaux (wallets, transactions, airdrops, smart contracts) appris from scratch",
-            "Performance backend : optimisation SQL, pagination, cache, recalcul asynchrone"
+            "Apprentissage d'un domaine complet (Web3, crypto, codes de la communauté) en partant de zéro, en parallèle de la livraison",
+            "Maîtrise d'une stack moderne en production (Java, Spring Boot, Next.js, MongoDB, Tailwind), du back-end au front",
+            "Conception et livraison de plusieurs features de gamification, de la V2 (système de classement par points) à la V3 (Battle Pass saisonnier, drop pools)",
+            "Conduite d'une refonte structurelle (V3) avec des choix d'architecture qui engagent l'équipe pour plusieurs années",
+            "Posture technique de lead : déploiements, planification, arbitrages et coordination avec les équipes métier"
           ],
           organizational: [
-            "Scrum réel pratiqué au quotidien (sprints, dailies, planning, review, rétro)",
-            "Communication avec équipes non-techniques. Vulgarisation du discours technique",
-            "Pair programming et demande d'aide structurée (savoir poser le bon contexte avant de demander)",
-            "Estimation en story points et découpage de features en tickets actionnables",
-            "Présentation de features en sprint review et démos hebdo, en adaptant le discours à l'audience"
+            "Passage du dev qui exécute au lead qui assume les décisions techniques de l'équipe",
+            "Collaboration au quotidien avec l'autre alternante via Work Adventure, avec une dynamique de revue de code croisée naturelle",
+            "Accompagnement de l'autre alternante, plus juniore, une fois que j'ai pris le rôle de lead",
+            "Reprise sans transition formelle du rôle du maître d'apprentissage à son départ, avec plusieurs dossiers en cours",
+            "Dialogue direct avec les équipes Business et Marketing sur la dernière période, sans intermédiaire entre la tech et le produit",
+            "Conception orientée autonomie des équipes métier : éviter que le Business ou le Marketing doivent solliciter la tech pour leurs actions du quotidien"
           ],
-          conclusion: "Ce qui m'a le plus appris, c'est l'écart entre la théorie (architecture hexagonale propre, 100 % de tests, séparation parfaite des couches) et la réalité d'une startup qui doit livrer. J'ai compris que les compromis sont la norme, pas l'exception, et que l'art consiste à savoir lesquels accepter consciemment et lesquels refuser. Cette alternance m'a fait passer du dev qui livre des specs au dev qui comprend le contexte business et qui ose proposer des changements."
+          conclusion: "La posture de lead, c'est ce qui m'a fait progresser le plus vite : apprendre à décider quand on n'a pas toutes les réponses, à tenir ses choix face à un calendrier qui serre, à coordonner sans s'imposer, et à accompagner une alternante plus juniore sans freiner mes propres livrables."
         },
         business: {
           achievements: [
-            "Custom Airdrop en production, devenu une feature différenciante de VenaLabs",
-            "Back-office utilisé au quotidien par l'équipe marketing. Autonomie sur la création de contenu",
-            "Leaderboard contribuant à la rétention et au temps passé sur la plateforme",
-            "Course Map améliorant le taux de complétion des parcours d'apprentissage",
-            "Tracking Amplitude pilotant les décisions produit sur des données réelles plutôt que sur l'intuition"
+            "Features V2 livrées (système de classement par points et autres), qui ont alimenté la rétention de la plateforme pendant que la V3 se préparait",
+            "Refonte V3 livrée : nouvelle identité, nouvelle architecture, plateforme remise sur des bases qui tiennent dans la durée",
+            "Battle Pass saisonnier en production, avec l'équipe Business qui crée elle-même les nouvelles saisons",
+            "Système de boxes et drop pools devenu le moteur central de gamification de la plateforme",
+            "Continuité technique de l'équipe assurée au départ du maître d'apprentissage, sans retard sur le calendrier"
           ],
           satisfaction: [
-            "Confiance progressive de l'équipe marketing : passage de « demandez aux devs » à « je gère »",
-            "Reviews positives en sprint review sur la qualité des livrables",
-            "Continuité du projet : ce que j'ai construit tourne toujours en production aujourd'hui",
-            "Réduction du temps de publication de contenu de plusieurs jours à quelques minutes"
+            "Continuité technique préservée au départ du maître d'apprentissage, sans rupture de service ni retard sur le calendrier V3",
+            "Confiance accordée par l'équipe et par la direction pour reprendre le rôle de lead sans transition formelle",
+            "Autonomie acquise par les équipes Business et Marketing sur des actions qui passaient avant par la tech"
           ],
-          conclusion: "Mes contributions ont rendu la plateforme à la fois plus différenciante (Custom Airdrop, Course Map) et plus pilotable (back-office, Amplitude). Surtout, l'équipe marketing peut désormais avancer sans goulot technique, ce qui était un vrai blocage à mon arrivée."
+          conclusion: "Au-delà des features livrées, j'ai contribué à assurer la continuité technique de l'équipe à un moment charnière (départ du maître d'apprentissage, refonte V3 en cours). La V3 a remis la plateforme sur des bases que l'équipe peut continuer à faire grandir. Et l'autonomie donnée aux équipes Business et Marketing leur permet désormais d'avancer sans goulot technique sur leur quotidien."
         }
       },
       aftermath: {
         immediate: [
-          "Passation des features en cours à un collègue dev (3-4h dédiées)",
-          "Documentation technique des modules Custom Airdrop et leaderboard",
-          "Brief sur l'organisation Amplitude (catalogue d'événements, dashboards créés)",
-          "Transmission des points en suspens et des choix d'architecture à conserver"
+          "Mise en production de la V3 et accompagnement des premiers usages côté utilisateurs",
+          "Lancement de la première saison du Battle Pass par l'équipe Business en autonomie, via les nouveaux outils admin",
+          "Premier cycle de retours utilisateurs et ajustements correctifs sur les écrans les plus utilisés",
+          "Continuation du développement sur la base posée par la V3 (nouvelles évolutions sur la map de cours, ajouts dans les drop pools, polish UI)"
         ],
         distant: [
-          "L'équipe a continué à itérer sur le Custom Airdrop suite à mes recommandations de simplification",
-          "Le tracking Amplitude a été enrichi avec des événements supplémentaires sur les nouvelles features",
-          "Pas de retour de bugs majeurs sur ce que j'ai livré. Plutôt bon signe sur la robustesse",
-          "Quelques messages ponctuels sur des questions d'organisation du code que j'ai introduit"
+          "L'équipe a continué à lancer de nouvelles saisons du Battle Pass en autonomie, comme prévu",
+          "De nouveaux types de drops et de nouveaux écrans V3 ont été ajoutés en suivant l'architecture posée",
+          "Pas de retour de bugs structurels sur la V3. Bon signe sur la solidité de la refonte",
+          "Continuité confirmée du système de classement V2, qui tournait toujours sans incident"
         ],
         today: [
-          "Toujours en lien occasionnel avec l'équipe (questions ponctuelles, retours de news)",
-          "Les features développées sont en production et continuent d'être utilisées au quotidien",
-          "Ce que j'ai construit est devenu la base de fonctionnalités plus avancées (extensions du leaderboard, nouveaux types d'airdrops)"
+          "La V3 est en production et continue d'évoluer sur la base posée pendant la dernière partie de mon année",
+          "Les features de gamification (du classement V2 au Battle Pass V3) sont devenues des piliers du produit",
+          "Mon expérience de passage du junior au lead developer sur cette année me sert directement aujourd'hui dans la manière dont je structure les nouveaux projets"
         ]
       },
       critique: [
         {
           type: 'lesson',
-          title: "Apprendre un domaine en livrant du code",
-          body: "Pendant les premières semaines, j'avais l'impression de faire semblant : je codais des features qui marchaient, mais je ne comprenais pas vraiment leur sens métier. Coder « j'implémente un airdrop » sans comprendre ce qu'est un airdrop côté utilisateur, c'est livrer du code sans valeur. Il a fallu structurer mon apprentissage en parallèle des sprints, ce qui a été épuisant les premiers mois."
+          title: "Apprendre un domaine inconnu en livrant en même temps",
+          body: "Le Web3, je l'ai découvert en codant. Les premières semaines, j'avais l'impression de faire semblant : je livrais du code qui compilait, mais sans bien comprendre ce que faisait vraiment le produit ni qui le consommait. La leçon, c'est que ce sentiment est normal et qu'il faut le traverser, mais aussi qu'on gagne énormément à passer du temps en amont sur le produit lui-même (lire les cours, observer les usages, parler aux équipes Business et Marketing) plutôt qu'à attaquer le code dès le premier jour. À refaire, je consacrerais explicitement un sprint à ça avant de m'attaquer aux tickets."
         },
         {
           type: 'lesson',
-          title: "La pureté technique n'est pas l'objectif",
-          body: "L'architecture hexagonale du backend était propre sur le papier, mais on a accepté plusieurs raccourcis quand les sprints serraient le calendrier. J'ai parfois passé du temps à respecter des principes alors qu'un raccourci pragmatique aurait été plus utile. La pureté est un moyen, pas un objectif. Il faut savoir la trahir consciemment."
+          title: "Accompagner une alternante plus juniore sans freiner ses propres livrables",
+          body: "Une fois mon maître d'apprentissage parti, j'ai pris le temps d'accompagner l'autre alternante, encore en licence, sur ses tâches du quotidien. C'est une responsabilité que je n'avais jamais portée. Au début, je répondais à ses questions au fil de l'eau, ce qui me coupait régulièrement de mes propres sujets et finissait par m'éparpiller. À refaire, je formaliserais un cadre clair de revue (créneaux dédiés, points fixes) plutôt que de fonctionner en réactif. Bien accompagner sans s'oublier, c'est probablement la compétence la plus difficile que cette période m'a appris à doser."
         },
         {
           type: 'lesson',
-          title: "On mesure la valeur du designer quand il n'est plus là",
-          body: "La V1 du wizard du Custom Airdrop avait six étapes. Il en fallait trois. Ce n'est pas un hasard si cette V1 est sortie pendant une période où le designer freelance n'intervenait pas : sans son regard en amont, on a improvisé, et on a payé la facture en refonte. Le designer n'était pas un confort, c'était ce qui nous évitait de coder deux fois la même feature."
+          title: "Reprendre un rôle de lead sans transition formelle",
+          body: "Le départ de mon maître d'apprentissage a été brutal. Plusieurs dossiers étaient en cours, le calendrier de la V3 était engagé, et il a fallu reprendre la suite sans passation formelle. J'ai dû redécouvrir certains choix au fil des semaines, ce qui m'a fait perdre du temps sur le démarrage. À refaire, je demanderais un point structuré beaucoup plus tôt sur ce que je devais reprendre, plutôt que de le découvrir par accident."
         },
         {
           type: 'lesson',
-          title: "Convaincre en parlant business, pas en parlant technique",
-          body: "J'ai défendu plusieurs fois l'ajout de tests sur les services critiques, et plusieurs fois la décision a été de prioriser les nouvelles features. Ce qui a fini par marcher, c'est de reformuler le risque en langage métier : « si on touche au scoring sans filet, voilà ce qu'on risque sur la rétention ». Le même argument, présenté côté business plutôt que côté bonne pratique, ne reçoit pas la même réponse."
+          title: "Une refonte vaut autant par les conventions que par le code",
+          body: "Sur la V3, ce qui a fait tenir le chantier sur la durée, ce n'est pas la qualité du premier module livré, c'est la solidité des conventions sur tous les modules suivants. J'ai passé un temps inhabituel à formaliser l'organisation par feature, les règles de nommage, les bases du design system avec la designeuse freelance. Ce travail invisible côté produit a évité que la V3 dérive en cours de route et finisse comme la V2 qu'on remplaçait."
         },
         {
           type: 'takeaway',
-          title: "Toucher à tout, c'est ne rien approfondir",
-          body: "VenaLabs a confirmé mon goût pour les contextes startup où on touche à tout, mais m'en a aussi montré la limite. Pour la suite, je veux pouvoir choisir un terrain (backend distribué, performance, architecture orientée événements) et y aller en profondeur, au lieu d'un fullstack dilué où on effleure tout. C'est la direction que je donne à mes prochaines expériences."
+          title: "La confiance ne se décrète pas, elle se construit",
+          body: "Quand mon maître d'apprentissage est parti, c'est l'équipe qui m'a poussé à reprendre le rôle. Cette confiance ne s'est pas décrétée le jour où on m'a confié la suite : elle s'est construite mois après mois, à travers les features livrées sur la V2, la régularité au quotidien, et la capacité à dire honnêtement ce que je ne savais pas encore faire. C'est probablement la leçon humaine que je garde de plus durable de cette année."
         }
-      ]
+      ],
+      annexes: {
+        title: "Annexes : avant / après de la refonte V3",
+        description: "Quelques captures pour visualiser concrètement le passage V2 à V3. Trois écrans de l'ancienne version, trois écrans de la nouvelle. Cliquez sur une image pour l'agrandir.",
+        groups: [
+          {
+            label: "Airdroped V2 (avant)",
+            description: "L'ancienne version, point de départ de la refonte.",
+            images: [
+              'assets/previews/venalabs/01.png',
+              'assets/previews/venalabs/02.png',
+              'assets/previews/venalabs/03.png'
+            ]
+          },
+          {
+            label: "Airdroped V3 (après)",
+            description: "La nouvelle version, nouvelle identité visuelle et nouvelle architecture.",
+            images: [
+              'assets/previews/venalabs/04.png',
+              'assets/previews/venalabs/05.png',
+              'assets/previews/venalabs/06.png'
+            ]
+          }
+        ]
+      }
     }
   },
 
   'macway': {
     title: 'MacWay - Site E-commerce',
-    description: "Site e-commerce Apple et high-tech avec comparateur produits, promotions automatiques, anti-fraude et marketplaces.",
+    description: "MacWay est un distributeur français de produits Apple et high-tech, fondé en 1990. J'y ai fait mon alternance pendant près de 3 ans (2022-2025). C'était ma première expérience en entreprise.",
     tags: ['Symfony', 'PHP', 'Twig', 'MySQL', 'SCSS', 'jQuery', 'API REST', 'Cron Jobs'],
     year: '2022-2025',
     logo: 'assets/logos/macway.png',
     url: 'https://www.macway.com/',
     presentation: "MacWay était un site e-commerce spécialisé dans les produits Apple et high-tech, avec un catalogue de plusieurs milliers de références et un trafic significatif. Pendant mon alternance de près de 3 ans (2022-2025), j'ai travaillé comme développeur web au sein d'une équipe de 2-3 développeurs, en lien direct avec le chef de projet et les équipes commerciales et marketing.\n\nLe site fonctionnait sous Symfony avec Twig pour le templating, jQuery pour les interactions frontend, MySQL pour la base de données et une architecture de cron jobs pour les tâches automatisées. J'ai développé de nombreuses fonctionnalités à fort impact business : un comparateur de produits cross-catégories, un système de promotions automatiques (UpdateDestockPromoTask) avec paliers graduels et protection des marges, des flux produits automatisés vers 4 marketplaces (Pinterest, Meta, Awin, Google Shopping), un système anti-fraude par fingerprinting navigateur (getBrowserFingerprint()), et la gestion des promotions vendeurs Mirakl.\n\nCette expérience m'a donné une compréhension profonde du e-commerce en production : logique métier complexe (marges, promotions, stock), contraintes de performance (trafic, temps de chargement), sécurité (fraude, paiements), et collaboration avec des équipes non-techniques.",
     objectives: {
-      context: "Alternance de près de 3 ans dans une équipe de 2-3 développeurs sur un site e-commerce en production avec un trafic significatif. Le site vendait des produits Apple et high-tech avec des enjeux de conversion, de gestion de stock et de visibilité marketplace. L'entreprise a fermé ses portes en 2025.",
+      context: "Alternance de près de 3 ans dans une équipe de 2-3 développeurs sur un site e-commerce en production avec un trafic significatif. Le site vendait des produits Apple et high-tech avec des enjeux de conversion, de gestion de stock et de visibilité marketplace. L'entreprise a été rachetée par un concurrent en 2025, et plusieurs fonctionnalités auxquelles j'ai contribué tournent encore aujourd'hui sur le site.",
       goals: "Développer des fonctionnalités à fort impact business (comparateur, promotions automatiques, flux marketplaces). Assurer la stabilité et la performance du site en production. Protéger le business contre la fraude. Automatiser les tâches répétitives pour libérer les équipes.",
       challenges: "Travailler sur un projet legacy existant avec du code hérité. Gérer des règles métier complexes (marges, paliers de promotion, éligibilité). Intégrer des APIs externes variées (Google Shopping, Pinterest, Meta, Awin, Mirakl). Maintenir la performance sur un catalogue volumineux. Protéger les transactions financières contre la fraude.",
       risks: "Bugs impactant les ventes ou les prix en production. Erreurs de calcul de marges sur les promotions automatiques. Flux marketplace rejetés par les plateformes. Fraudes non détectées entraînant des pertes financières. Régressions sur un code legacy sans tests exhaustifs."
@@ -778,9 +795,9 @@ const projectsData: Record<string, Project> = {
     actors: "Équipe de 2-3 développeurs, un chef de projet, et les équipes commerciales et marketing. Travail quotidien avec validations métier sur les règles de promotion et de pricing. Revues de code entre développeurs. Communication régulière avec l'équipe commerciale pour comprendre les besoins business.",
     results: {
       personal: "3 ans chez MacWay, ça m'a rendu solide en Symfony et MySQL sur un vrai site e-commerce en production. J'ai compris comment fonctionne un business en ligne de l'intérieur : marges, conversions, gestion de stock, promotions. J'ai aussi appris à sécuriser un site contre la fraude et à automatiser des flux de données complexes. Et surtout, j'ai appris à résoudre des bugs critiques en prod sans paniquer.",
-      business: "Le comparateur de produits a généré 638 résultats de comparaison par mois. Le système de promos automatiques (UpdateDestockPromoTask) a réduit le stock dormant sans que l'équipe commerciale n'ait à intervenir. Les produits MacWay étaient visibles sur 4 marketplaces avec des flux mis à jour chaque nuit. La fraude a chuté grâce au fingerprinting navigateur. L'équipe commerciale a gagné plusieurs heures par semaine en tâches manuelles."
+      business: "Le comparateur de produits aide les clients à se décider entre plusieurs références. Le système de promos automatiques (UpdateDestockPromoTask) a réduit le stock dormant sans que l'équipe commerciale n'ait à intervenir. Les produits MacWay étaient visibles sur 4 marketplaces avec des flux mis à jour chaque nuit. La fraude a chuté grâce au fingerprinting navigateur. L'équipe commerciale a gagné plusieurs heures par semaine en tâches manuelles."
     },
-    future: "MacWay a fermé en 2025, mais ce que j'ai appris là-bas me sert tous les jours. Le e-commerce en production. Symfony, MySQL, marketplaces, anti-fraude. C'est un bagage que je réutilise sur chaque projet. Et avoir compris les enjeux business (marges, conversions, stock) me donne une vision produit que beaucoup de développeurs n'ont pas.",
+    future: "MacWay a été racheté par un concurrent en 2025, et plusieurs des fonctionnalités auxquelles j'ai contribué continuent de tourner sur le site. Ce que j'ai appris là-bas me sert tous les jours. Le e-commerce en production. Symfony, MySQL, marketplaces, anti-fraude. C'est un bagage que je réutilise sur chaque projet. Et avoir compris les enjeux business (marges, conversions, stock) me donne une vision produit que beaucoup de développeurs n'ont pas.",
     critique: "Au début de mon alternance, j'utilisais une seule branche Git pour tout le travail, ce qui créait des conflits et des risques de régression. J'ai appris l'importance d'un workflow Git structuré (branches par fonctionnalité, pull requests, revues de code) à travers cette erreur. Le code legacy sans tests exhaustifs rendait les refactorings risqués : j'aurais dû insister pour ajouter des tests sur les modules critiques (calcul de promotions, anti-fraude) avant de les modifier. Le système de promotions automatiques a nécessité plusieurs itérations car les premières règles métier n'étaient pas assez précises : une validation plus rigoureuse des spécifications en amont aurait évité du retravail. Enfin, la documentation technique était insuffisante, ce qui rendait l'onboarding de nouveaux développeurs difficile.",
     relatedSkills: ['symfony', 'optimisation-ux', 'collaboration-agile', 'autonomie-resolution', 'vision-produit'],
     majorTasks: [
@@ -795,7 +812,7 @@ const projectsData: Record<string, Project> = {
           "Optimisation mobile avec scroll horizontal et accordéons pour les caractéristiques",
           "Tests et mise en production avec suivi des métriques d'utilisation"
         ],
-        result: "Comparateur en production avec une moyenne de 638 résultats de comparaison par mois. L'expérience mobile est fluide. La fonctionnalité est mise en avant sur les pages catégories et contribue à la conversion.",
+        result: "Comparateur en production, fluide sur mobile comme sur desktop. La fonctionnalité est mise en avant sur les pages catégories et aide les clients à se décider entre plusieurs produits.",
         learning: "L'approche mobile-first est indispensable en e-commerce : la majorité du trafic vient du mobile. La persistance en session évite la frustration de perdre la sélection entre les pages. Les highlights automatiques guident l'utilisateur sans surcharger l'interface."
       },
       {
@@ -860,53 +877,50 @@ const projectsData: Record<string, Project> = {
     // === RICH CONTENT (v2 layout). Alternance e-commerce, thème sky ===
     rich: {
       theme: 'sky',
-      tagline: "Près de 3 ans d'alternance sur un vrai site e-commerce en production. La première fois que j'ai vu le code que j'écris faire bouger des chiffres business.",
+      tagline: "Ma première vraie expérience en entreprise. Près de 3 ans d'alternance sur un site e-commerce historique, à apprendre le métier au quotidien.",
       keyMetrics: [
-        { value: '~3 ans', label: 'd\'alternance' },
-        { value: '2-3', label: 'développeurs' },
-        { value: '4', label: 'marketplaces alimentées' },
-        { value: '638', label: 'comparaisons / mois' },
-        { value: '1', label: 'site, plusieurs milliers de produits' }
+        { value: '1990', label: 'année de création de MacWay' },
+        { value: '~3 ans', label: 'd\'alternance, ma 1ère expérience pro' },
+        { value: '4', label: 'marketplaces alimentées' }
       ],
       presentation: [
-        "MacWay était un site e-commerce spécialisé dans les produits Apple et la high-tech, avec un catalogue de plusieurs milliers de références et un trafic significatif. C'est là que j'ai fait mon alternance pendant près de 3 ans (2022-2025), comme développeur web dans une équipe de deux à trois développeurs, en lien direct avec le chef de projet et les équipes commerciales et marketing.",
-        "C'était mon premier vrai site en production. Avant MacWay, j'avais surtout codé pour l'école. Des projets propres mais sans véritable enjeu : pas de vrais clients, pas de stock, pas de paiements. Là, c'était l'inverse. Un bug pouvait faire afficher un mauvais prix, un script qui plante pouvait couper les ventes, une promotion mal configurée pouvait grignoter les marges. Ça m'a forcé à coder différemment : tester davantage, valider les règles métier avec les équipes commerciales avant d'écrire la moindre ligne, et réfléchir à ce qui se passe quand quelque chose casse.",
-        "J'ai contribué à plusieurs fonctionnalités à fort impact business : un comparateur de produits cross-catégories, un système de promotions automatiques avec paliers et protection des marges, des flux produits automatisés vers quatre marketplaces (Pinterest, Meta, Awin, Google Shopping), un système anti-fraude par empreinte de navigateur, et la synchronisation des promotions vendeurs sur la marketplace Mirakl. MacWay a fermé ses portes en 2025, mais ces 3 années m'ont donné un bagage e-commerce que je réutilise sur tous mes projets depuis."
+        "MacWay était un distributeur français de produits Apple et high-tech, fondé en 1990. L'un des plus anciens revendeurs Apple en France, avec un catalogue de plusieurs milliers de références et un site e-commerce historique. C'est là que j'ai fait mon alternance pendant près de 3 ans, de novembre 2022 à mars 2025, comme développeur web.",
+        "C'était ma toute première expérience en entreprise. J'arrivais avec les bases théoriques de mon école, et je suis tombé sur un projet vivant depuis longtemps, avec son historique, ses conventions et son code hérité. Le vrai défi des premiers mois n'a pas été de coder, mais d'apprendre à comprendre. Comprendre comment fonctionne un site e-commerce en production, comment une équipe de développeurs travaille au quotidien, comment on intervient sur un code qu'on n'a pas écrit sans tout casser.",
+        "L'entreprise traversait des difficultés, et les objectifs qui m'étaient confiés visaient à faire gagner du chiffre d'affaires et à améliorer la conversion utilisateur. Mon maître d'apprentissage, occupé par ses propres chantiers, n'avait pas toujours le temps de tout relire en détail. Ça m'a obligé très tôt à produire un code propre, prêt à être déployé sans aller-retour. C'est cette contrainte qui m'a forgé en autonomie, en discipline et en rigueur, bien plus vite que dans un cadre confortable.",
+        "Au fil des mois, j'ai contribué à plusieurs fonctionnalités à fort impact business : un comparateur de produits cross-catégories, un système de promotions automatiques avec paliers et protection des marges, des flux produits automatisés vers quatre marketplaces (Pinterest, Meta, Awin, Google Shopping), un système anti-fraude par empreinte de navigateur, et la synchronisation des promotions vendeurs sur la marketplace Mirakl. MacWay a été racheté par un concurrent en 2025, et plusieurs de mes contributions tournent encore aujourd'hui sur le site. Ces 3 années restent pour moi le socle de tout ce que je sais aujourd'hui sur le e-commerce et le travail en équipe."
       ],
       objectives: [
         "Monter en compétence sur Symfony et MySQL en production, sur un projet legacy et avec du vrai trafic",
         "Livrer des fonctionnalités à fort impact business (comparateur, promos automatiques, flux marketplaces)",
         "Sécuriser le site contre la fraude et protéger les transactions financières",
-        "Automatiser des tâches répétitives pour libérer du temps aux équipes commerciales et marketing",
+        "Automatiser des tâches répétitives pour libérer du temps aux équipes produit et marketing",
         "Apprendre à travailler en équipe : revues de code, branches Git, communication avec les non-tech",
         "Comprendre comment fonctionne un business en ligne de l'intérieur. Marges, conversions, stock, marketplaces"
       ],
       context: {
-        period: "Septembre 2022 à Juin 2025 (près de 3 ans, en alternance)",
+        period: "Novembre 2022 à Mars 2025 (près de 3 ans, en alternance)",
         framework: "Alternance développeur web, dans le cadre de mon cursus en informatique",
-        mode: "Présentiel principalement, avec quelques jours en remote selon les périodes",
+        mode: "Présentiel, au siège de MacWay à Illkirch-Graffenstaden",
         team: [
-          { role: "Moi", description: "Alternant développeur web. Features fullstack côté Symfony / Twig / SCSS / jQuery, scripts automatisés (cron jobs), intégrations marketplaces et anti-fraude. Ma première expérience longue en équipe sur un site en production." },
-          { role: "Chef de projet technique", description: "Référent technique sur l'architecture Symfony et la base de données, validateur des choix structurants. C'est lui qui m'a appris à travailler proprement avec Git (branches, pull requests, revues de code) après mes premiers mois où j'utilisais une seule branche pour tout." },
-          { role: "Développeurs collègues (1 à 2)", description: "Collaboration au quotidien sur le backlog, revues de code croisées, partage des incidents en production. C'est avec eux que j'ai appris à débugger sereinement quand un bug tombe en prod, plutôt que de paniquer." },
-          { role: "Équipe commerciale", description: "Validait les règles métier des promotions (paliers, marges, éligibilité), signalait les bugs vus côté terrain et formulait les besoins de fonctionnalités. C'est avec eux que j'ai appris à traduire un besoin business en spec technique exécutable." },
-          { role: "Équipe marketing", description: "Pilotait la diffusion des produits sur les marketplaces (Pinterest, Meta, Awin, Google Shopping) et validait les flux générés. M'ont fait comprendre que la qualité d'un flux se juge sur la visibilité des produits, pas sur la propreté du XML." }
+          { role: "Moi", description: "Alternant développeur web. C'était ma première expérience en entreprise. J'arrivais avec les bases de l'école et je suis monté en autonomie au fil des mois." },
+          { role: "Chef de projet (mon maître d'apprentissage)", description: "Mon encadrant au quotidien. Il pilotait les priorités, prenait les décisions sur les fonctionnalités à développer et me transmettait les besoins à traiter. C'est lui qui m'a appris à cadrer une demande avant de coder et à m'inscrire dans un cadre professionnel structuré." },
+          { role: "Développeur collègue", description: "Un développeur back-end, dont les choix d'architecture m'ont beaucoup appris sur les sujets plus complexes (intégrations API, scripts automatisés)." }
         ],
         organization: [
           "Sprints courts avec priorisation hebdomadaire selon les urgences business",
           "Tickets gérés sur outil interne, avec validation métier avant développement sur les sujets sensibles (promos, prix)",
-          "Branches Git par fonctionnalité et pull requests obligatoires. Au début je travaillais directement sur la branche principale, j'ai vite appris pourquoi c'était une mauvaise idée",
+          "Branches Git par fonctionnalité et pull requests obligatoires. Une discipline que mon maître d'apprentissage m'a inculquée dès mes premiers jours",
           "Revues de code systématiques entre développeurs avant tout merge",
           "Déploiements progressifs avec recette manuelle, surtout sur les modules sensibles (paiements, promos)",
-          "Communication régulière avec les équipes commerciales et marketing pour cadrer les besoins"
+          "Communication régulière avec le chef de projet et les équipes marketing et produit pour cadrer les besoins"
         ],
         stack: [
           { label: "Backend", value: "Symfony en PHP, base de données MySQL, scripts automatisés (cron jobs)" },
           { label: "Frontend", value: "Twig pour les templates, SCSS pour le style, jQuery pour les interactions" },
           { label: "Intégrations externes", value: "APIs Pinterest, Meta, Awin, Google Shopping (flux produits) et Mirakl (marketplace vendeurs)" },
-          { label: "Paiements", value: "Intégration prestataire de paiement, contrôle de fraude avec empreinte de navigateur" },
-          { label: "Outils internes", value: "Outil interne de gestion du catalogue et des promotions, tableaux de bord pour les équipes commerciales" },
-          { label: "Versionnage", value: "Git. Branches par fonctionnalité après mes premiers mois, revues de code obligatoires" }
+          { label: "Paiements", value: "contrôle de fraude avec empreinte de navigateur" },
+          { label: "Outils internes", value: "Outil interne de gestion du catalogue et des promotions, tableaux de bord pour les équipes métier" },
+          { label: "Versionnage", value: "Git avec branches par fonctionnalité, pull requests et revues de code obligatoires avant tout merge" }
         ],
         stakes: [
           "Un site en production réel, avec du vrai trafic et de vrais paiements. Chaque bug a un impact direct sur le chiffre",
@@ -916,12 +930,10 @@ const projectsData: Record<string, Project> = {
           "Mon premier vrai contexte professionnel. Passage du code « école » au code « production »"
         ],
         risks: [
-          "Bugs en production impactant les ventes ou les prix affichés, déjà arrivé sur les premiers mois et c'est une bonne école",
+          "Bugs en production impactant les ventes ou les prix affichés. Risque permanent qui exige une rigueur constante avant chaque mise en ligne",
           "Erreurs de calcul de marge sur les promotions automatiques pouvant entraîner des ventes à perte",
           "Flux marketplaces rejetés par les plateformes pour cause de format invalide ou de champs manquants",
-          "Fraudes au paiement non détectées entraînant des pertes financières directes (chargebacks)",
-          "Régressions sur du code legacy peu testé : modifier un module existant pouvait casser une fonctionnalité voisine sans qu'on s'en rende compte tout de suite",
-          "Travailler sur un projet long (3 ans) tout en tenant le rythme de l'école. La fatigue arrive vite si on ne s'organise pas"
+          "Fraudes au paiement non détectées entraînant des pertes financières directes",
         ]
       },
       steps: [
@@ -931,33 +943,29 @@ const projectsData: Record<string, Project> = {
           bullets: [
             "Découverte du code Symfony existant et de la structure de la base de données. Beaucoup à lire avant d'écrire",
             "Premières contributions sur des sujets simples (corrections de bugs, petits écrans) pour comprendre le code et le quotidien de l'équipe",
-            "Travail initialement sur une seule branche Git, jusqu'à ce qu'un conflit me coûte une demi-journée. Leçon retenue, passage aux branches par fonctionnalité",
+            "Prise en main du workflow Git de l'équipe dès les premiers jours (branches par fonctionnalité, pull requests, revues de code)",
             "Pair programming avec le chef de projet sur les sujets nouveaux pour combler les zones d'ombre",
-            "Découverte des règles métier (marges, paliers de promotion, gestion du stock) à travers les discussions avec l'équipe commerciale"
+            "Découverte des règles métier (marges, paliers de promotion, gestion du stock) à travers les échanges avec le chef de projet et l'équipe marketing"
           ]
         },
         {
           title: "Comparateur de produits cross-catégories",
           description: "Permettre aux clients de comparer jusqu'à 4 produits. Y compris entre catégories différentes. Sur mobile comme sur desktop",
           bullets: [
-            "Conception de la fonctionnalité avec le chef de projet, en partant des besoins exprimés par l'équipe commerciale",
+            "Conception de la fonctionnalité avec le chef de projet, en partant des besoins exprimés par l'équipe marketing",
             "Développement de la logique côté Symfony pour croiser les caractéristiques communes et spécifiques entre catégories",
             "Persistance de la sélection en session, pour que l'utilisateur ne perde pas ses choix en naviguant",
             "Mise en avant automatique des différences entre produits, sans surcharger l'interface",
-            "Optimisation mobile (la majorité du trafic) avec scroll horizontal et accordéons pour les caractéristiques",
-            "Mise en production progressive et suivi des métriques d'utilisation"
+            "Optimisation mobile (la majorité du trafic) avec scroll horizontal et accordéons pour les caractéristiques"
           ]
         },
         {
           title: "Promotions automatiques avec paliers et protection des marges",
           description: "Automatiser le déstockage des produits dormants, avec des réductions graduelles tout en garantissant une marge minimum",
           bullets: [
-            "Définition des règles métier avec l'équipe commerciale (ancienneté du produit, ventes, catégorie, marge minimum)",
+            "Définition des règles métier avec le chef de projet et l'équipe marketing (ancienneté du produit, ventes, catégorie, marge minimum)",
             "Développement d'un script automatisé qui tourne chaque nuit pour appliquer les paliers (20 %, 40 %, 60 %)",
             "Vérification systématique de la marge minimum (5 %) avant toute baisse de prix. Un garde-fou essentiel",
-            "Notifications automatiques à l'équipe commerciale à chaque changement de palier, pour qu'elle reste dans la boucle",
-            "Reporting hebdomadaire (produits en promotion, marges, évolution du stock dormant)",
-            "Tests unitaires sur les calculs de prix et de marge, pour éviter une erreur qui se solderait par des ventes à perte"
           ]
         },
         {
@@ -965,10 +973,8 @@ const projectsData: Record<string, Project> = {
           description: "Diffuser automatiquement le catalogue vers Pinterest, Meta, Awin et Google Shopping, chacun avec ses propres exigences",
           bullets: [
             "Étude des spécifications de chaque plateforme. Souvent mal documentées, qui changent sans prévenir",
-            "Développement d'un script automatisé qui génère un flux conforme pour chaque plateforme, chaque nuit",
+            "Développement d'un script automatisé qui génère un flux conforme pour chaque plateforme",
             "Filtrage des produits éligibles (stock disponible, prix renseigné, images valides, catégorie autorisée)",
-            "Mise en place d'alertes automatiques en cas d'anomalie (chute du nombre de produits, champs manquants)",
-            "Hébergement des flux sur des points d'accès dédiés, consultés par les plateformes",
             "Suivi régulier avec l'équipe marketing pour réagir vite aux retours des plateformes"
           ]
         },
@@ -976,12 +982,10 @@ const projectsData: Record<string, Project> = {
           title: "Anti-fraude par empreinte de navigateur",
           description: "Détecter automatiquement les commandes suspectes pour soulager la vérification manuelle et limiter les pertes",
           bullets: [
-            "Collecte d'une empreinte unique du navigateur (résolution, fuseau horaire, plugins, rendu graphique) pour identifier des comportements suspects",
+            "Collecte d'une empreinte unique du navigateur pour identifier des comportements suspects",
             "Croisement de l'empreinte avec l'historique des commandes (même empreinte avec plusieurs cartes, empreintes liées à des litiges passés, incohérence fuseau horaire / adresse de livraison)",
-            "Calcul d'un score de risque sur chaque commande, avec des seuils ajustables",
+            "Calcul d'un score de risque sur chaque commande",
             "Alertes automatiques pour les commandes suspectes, avec le détail du score pour aider à la décision",
-            "Blocage automatique pour les cas les plus flagrants",
-            "Validation continue avec l'équipe commerciale pour ajuster les seuils sans bloquer des commandes légitimes"
           ]
         },
         {
@@ -992,30 +996,30 @@ const projectsData: Record<string, Project> = {
             "Développement d'un service de synchronisation des promotions catalogue ↔ Mirakl, avec règles de priorité",
             "Gestion des cas complexes : promotions concurrentes, promotions expirées, cumul possible ou non selon les vendeurs",
             "Gestion des erreurs et tentatives multiples pour les appels API instables",
-            "Validation finale avec l'équipe commerciale des règles de priorité et de cumul des promotions"
+            "Validation finale avec le chef de projet des règles de priorité et de cumul des promotions"
           ]
         }
       ],
       actors: [
         {
-          role: "Chef de projet technique",
-          description: "Mon référent direct sur les choix d'architecture et le code. C'est lui qui m'a fait passer du « code école » au « code prod » : revues de code détaillées, exigence sur les conventions, et surtout cette phrase qu'il m'a dite tôt et qui m'a marqué. « écris ton code comme si quelqu'un d'autre allait le maintenir dans deux ans, parce que ce sera probablement le cas ». Je l'ai prise au sérieux."
+          role: "Chef de projet (mon maître d'apprentissage)",
+          description: "C'est lui qui m'encadrait au quotidien. Il pilotait les priorités, prenait les décisions sur les fonctionnalités à développer et me transmettait les besoins à traiter. Travailler avec lui m'a appris à cadrer une demande avant de coder, et à évoluer dans un cadre professionnel structuré."
         },
         {
-          role: "Développeurs collègues",
-          description: "Des camarades de tranchée plus que des supérieurs. Revues de code croisées, débuggage à plusieurs quand un bug tombait en prod, échanges de bonnes pratiques. C'est avec eux que j'ai appris à demander de l'aide intelligemment (poser le contexte, montrer ce qu'on a déjà essayé) et à offrir de l'aide en retour sans condescendance."
-        },
-        {
-          role: "Équipe commerciale",
-          description: "Les vraies clientes de mes développements. Leurs retours étaient la vérité du terrain : ce qui marchait, ce qui agaçait, ce qui leur faisait perdre du temps. C'est avec eux que j'ai appris à traduire un besoin flou (« il faudrait pouvoir.. ») en spec technique exécutable, et à valider les règles métier avant de coder, pas après."
+          role: "Développeur collègue",
+          description: "Un développeur back-end qui m'a aidé à mes débuts à prendre en main l'application, et qui développait lui aussi des fonctionnalités sur le site. Nos échanges et nos revues de code croisées m'ont fait progresser au quotidien sur les sujets plus techniques."
         },
         {
           role: "Équipe marketing",
-          description: "Pilotait la diffusion des produits sur les marketplaces. M'ont appris que la qualité d'un flux ne se juge pas à la propreté du XML, mais à la visibilité réelle des produits sur la plateforme. Une vraie leçon de pragmatisme : j'ai appris à mesurer mon travail par son impact, pas par son élégance."
+          description: "C'est avec elle que j'étais le plus souvent en relation. Elle pilotait notamment la diffusion des produits sur les marketplaces (Pinterest, Meta, Awin, Google Shopping) et nous remontait régulièrement des besoins fonctionnels. J'ai appris à mesurer la qualité de mon travail par son impact concret, pas par son élégance technique."
         },
         {
-          role: "Service client (interactions ponctuelles)",
-          description: "Première ligne sur les bugs vus par les vrais clients. Quand ils nous signalaient un problème de panier ou un prix incorrect, c'était souvent plus précis qu'un ticket interne. Leurs remontées m'ont appris à prendre les retours utilisateurs très au sérieux, même quand ils sont mal formulés."
+          role: "Équipe produit",
+          description: "En charge de tout ce qui concerne les produits du catalogue (références, fiches, descriptions, classification). Nos échanges m'ont fait comprendre que coder, c'est aussi servir une vision produit cohérente, pas seulement implémenter une spec."
+        },
+        {
+          role: "Designer interne",
+          description: "En charge du design du site et de l'identité visuelle. C'est lui qui produisait les maquettes des nouvelles pages et qui veillait à la cohérence visuelle de l'ensemble. Travailler avec lui m'a appris à respecter une intention de design dans l'implémentation, et à dialoguer côté front sur ce qui était réalisable ou pas."
         }
       ],
       results: {
@@ -1025,33 +1029,32 @@ const projectsData: Record<string, Project> = {
             "Scripts automatisés robustes (promotions, flux marketplaces) avec gestion d'erreurs et notifications",
             "Intégrations d'APIs externes variées (4 marketplaces + Mirakl + prestataire de paiement) avec leurs spécificités",
             "Compréhension des enjeux de sécurité côté paiement et anti-fraude, pas en théorie mais en pratique",
-            "Capacité à intervenir sur du code legacy peu testé sans casser ce qui marche"
           ],
           organizational: [
             "Travail en équipe sur du long terme : revues de code, branches Git, communication continue avec les non-tech",
-            "Capacité à débugger sereinement en production, sans paniquer quand un truc casse",
-            "Communication avec les équipes commerciales et marketing. Vulgariser le technique, traduire un besoin business en spec",
+            "Discipline et rigueur : tester deux fois plutôt qu'une, pour livrer du code qui tient en production sans incident",
+            "Communication avec les équipes marketing et produit. Vulgariser le technique, traduire un besoin business en spec",
             "Tenue d'un projet sur la durée (3 ans) en parallèle de l'école, avec la discipline que ça demande",
             "Habitude de valider les règles métier en amont avec les équipes concernées, plutôt que de coder une spec ambiguë"
           ],
-          conclusion: "Ce que MacWay m'a appris de plus précieux, c'est que coder pour la production, ce n'est pas la même chose que coder à l'école. Il y a une exigence de fiabilité qu'on ne mesure pas tant qu'on n'a pas vu une de ses propres erreurs partir en prod. J'ai aussi appris que le code n'est qu'une partie du métier. La moitié du temps, c'était comprendre des règles métier, valider avec les équipes commerciales, traduire un besoin flou. Et surtout, MacWay m'a donné cette base de confiance : je sais que je peux livrer du code qui tient en production, parce que je l'ai déjà fait pendant 3 ans."
+          conclusion: "Ce que MacWay m'a appris de plus précieux, c'est qu'on ne code pas en entreprise comme on code à l'école. L'exigence de fiabilité y est d'un autre ordre, et elle s'apprend à force d'attention portée à chaque livraison. J'ai aussi appris que le code n'est qu'une partie du métier : la moitié du temps, c'était comprendre des règles métier, échanger avec le chef de projet et les équipes marketing et produit, traduire un besoin flou en spec exécutable. MacWay m'a donné cette base de confiance : je sais que je peux livrer du code qui tient en production, parce que je l'ai déjà fait pendant 3 ans."
         },
         business: {
           achievements: [
-            "Comparateur de produits en production avec environ 638 utilisations par mois",
-            "Système de promotions automatiques actif en continu, sans intervention manuelle de l'équipe commerciale",
+            "Comparateur de produits cross-catégories en production, utilisé sur les pages catégories pour aider à la décision d'achat",
+            "Système de promotions automatiques actif en continu, sans intervention manuelle des équipes métier",
             "Catalogue MacWay diffusé sur 4 marketplaces majeures avec des flux mis à jour chaque nuit",
             "Réduction significative des commandes frauduleuses validées grâce au scoring automatique",
             "Promotions cohérentes entre le catalogue MacWay et les offres Mirakl"
           ],
           satisfaction: [
-            "L'équipe commerciale a gagné plusieurs heures par semaine sur les tâches manuelles de promotion",
+            "Les équipes marketing et produit ont gagné plusieurs heures par semaine sur les tâches manuelles de promotion",
             "L'équipe marketing voyait ses produits remonter dans les marketplaces sans avoir à intervenir",
             "Confiance progressive du chef de projet sur des sujets de plus en plus structurants au fil des mois",
             "Pas de bug majeur sur les modules sensibles (promotions, anti-fraude, flux marketplaces) après la mise en production",
-            "Continuité de mes contributions : ce que j'ai livré a tourné jusqu'à la fermeture du site en 2025"
+            "Continuité de mes contributions : ce que j'ai livré tourne encore après le rachat de l'entreprise par un concurrent"
           ],
-          conclusion: "Mes contributions ont rendu plusieurs aspects du site plus automatisés (promotions, flux marketplaces, anti-fraude) et plus utiles aux clients (comparateur). L'équipe commerciale et l'équipe marketing ont gagné en autonomie sur leurs tâches du quotidien. Pour une entreprise qui a fini par fermer en 2025, ce n'était pas suffisant pour la sauver. Mais c'est un constat qui dépasse largement le périmètre de la technique."
+          conclusion: "Mes contributions ont rendu plusieurs aspects du site plus automatisés (promotions, flux marketplaces, anti-fraude) et plus utiles aux clients (comparateur). Les équipes marketing et produit ont gagné en autonomie sur leurs tâches du quotidien. L'entreprise a été rachetée par un concurrent en 2025, et plusieurs des fonctionnalités auxquelles j'ai contribué tournent encore aujourd'hui sur le site. C'est le meilleur retour qu'on puisse avoir sur un travail livré il y a 3 ans."
         }
       },
       aftermath: {
@@ -1062,13 +1065,13 @@ const projectsData: Record<string, Project> = {
           "Bilan personnel sur les 3 années. Ce que j'ai appris, ce que je veux pousser ailleurs"
         ],
         distant: [
-          "Le site a continué à tourner avec mes contributions jusqu'à la fermeture de l'entreprise en 2025",
+          "Le site a continué à tourner avec mes contributions jusqu'au rachat de l'entreprise en 2025, et plusieurs d'entre elles sont toujours en place sur le site repris par le nouveau propriétaire",
           "Pas de retour de bugs majeurs sur les modules que j'avais livrés. Un bon signe sur la robustesse",
           "Validation métier en amont, scripts automatisés notifiés, garde-fous sur les calculs sensibles : ces façons de faire sont restées des automatismes pour moi",
           "Quelques échanges ponctuels avec d'anciens collègues, qui me servent de réseau aujourd'hui"
         ],
         today: [
-          "MacWay a fermé en 2025, mais le bagage e-commerce que j'en ai retiré me sert encore",
+          "MacWay a été racheté par un concurrent en 2025, et certaines de mes contributions tournent encore sur le site repris. Le bagage e-commerce que j'en ai retiré me sert au quotidien sur tous mes nouveaux projets",
           "Ma compréhension des enjeux business (marges, conversions, stock, marketplaces) influence toujours la manière dont je conçois une feature",
           "Je garde de cette alternance une conviction forte : tant qu'on n'a pas vu son propre code partir en prod sur du vrai trafic, certaines exigences de fiabilité restent abstraites"
         ]
@@ -1076,33 +1079,38 @@ const projectsData: Record<string, Project> = {
       critique: [
         {
           type: 'lesson',
-          title: "Une seule branche Git, c'était une mauvaise idée",
-          body: "Pendant mes premiers mois, je travaillais sur une seule branche pour tout. Fonctionnalités, corrections, expérimentations. Le jour où j'ai dû revenir en arrière sur un changement, j'ai compris à quel point c'était fragile. Le passage aux branches par fonctionnalité et aux pull requests m'a coûté quelques heures de friction au début, mais m'a fait gagner un confort de travail que je ne pourrais plus quitter."
+          title: "Reprendre un code existant pour une première expérience, c'est une école en soi",
+          body: "Pour mes débuts en entreprise, je suis tombé sur un projet existant depuis longtemps, avec son historique, ses conventions et son code hérité. Le défi des premiers mois n'a pas été d'écrire du code, mais de comprendre celui déjà en place. Apprendre à lire avant d'écrire, à respecter les choix faits avant moi, à m'intégrer dans une équipe technique structurée. C'est une compétence qu'on n'apprend pas à l'école et qui m'a beaucoup servi par la suite."
         },
         {
           type: 'lesson',
-          title: "Intervenir sur du legacy non testé, ça s'apprend",
-          body: "Beaucoup de modules existants n'avaient aucun test. Modifier un calcul de promotion ou le panier, c'était marcher sur des œufs : un changement anodin pouvait casser une fonctionnalité voisine sans bruit. J'ai appris une discipline particulière pour ça. Lire le code et ses usages avant d'y toucher, faire des changements petits et réversibles, et rejouer à la main les parcours adjacents. Ce n'est pas glorieux, mais c'est ce qui permet de livrer sur du legacy sans tout faire sauter."
+          title: "Consolider la théorie de l'école par la pratique en entreprise",
+          body: "À l'école, on apprend des concepts dans un cadre clair, avec des projets bien délimités. En entreprise, les besoins sont moins formels, les contraintes plus nombreuses, les enjeux concrets. Cette alternance m'a permis de consolider ce que j'avais vu en cours en l'appliquant sur des cas réels. Symfony, MySQL, Git, le travail en équipe : tout a pris une autre dimension dès qu'il y a eu de vrais clients et un vrai site derrière."
         },
         {
           type: 'lesson',
-          title: "Valider les règles métier avant de coder, pas après",
-          body: "Les premières versions du système de promotions automatiques ont nécessité plusieurs allers-retours avec l'équipe commerciale parce que les règles métier n'étaient pas assez précises au démarrage. Aujourd'hui, je commence systématiquement par formaliser les règles avec les équipes concernées avant d'écrire du code. Ça évite de jeter du travail."
+          title: "L'autonomie est née d'une contrainte",
+          body: "L'entreprise traversait des difficultés et mon maître d'apprentissage n'avait pas toujours le temps de tout relire. Ça m'a obligé très tôt à produire un code propre, directement prêt à être déployé, qui ne demande pas un aller-retour. Au lieu d'attendre les validations pour avancer, j'ai dû apprendre à valider mon propre travail. Cette contrainte m'a forgé en discipline et en rigueur, et c'est sans doute ce que je garde de plus précieux de ces 3 années."
         },
         {
           type: 'lesson',
-          title: "Débugger en prod sans paniquer",
-          body: "Les premières fois où un bug est tombé en production, j'étais tétanisé. Avec le temps, j'ai appris à respirer, à lire les logs avec méthode, à isoler le problème avant de toucher au code. C'est moins une compétence technique qu'une discipline mentale, et c'est sans doute le réflexe le plus utile que MacWay m'a laissé au quotidien."
+          title: "Concevoir des systèmes adaptables, pas figés",
+          body: "Sur les promotions automatiques, j'ai très tôt choisi de coder de façon à ce que les règles métier puissent évoluer sans repasser par le code. Les paliers, les seuils, les conditions d'éligibilité étaient configurables. Quand un ajustement était nécessaire, on pouvait le faire sans nouvelle mise en production. Cette approche m'a évité beaucoup de retravail, et je l'applique aujourd'hui à toutes les fonctionnalités où les règles risquent de bouger."
+        },
+        {
+          type: 'lesson',
+          title: "La rigueur, pour ne pas casser ce qui marche",
+          body: "Sur un site e-commerce en production, chaque modification est un risque. J'ai pris l'habitude de tester systématiquement, de vérifier deux fois, de relire mon propre code avant de pousser. C'est cette discipline qui a fait que je n'ai pas eu de bug majeur en prod sur les modules sensibles (promotions, anti-fraude, flux marketplaces). Ce n'est pas une question de chance, c'est une attention soutenue portée à chaque détail."
         },
         {
           type: 'takeaway',
           title: "Coder pour la prod, c'est une autre exigence",
-          body: "Avant MacWay, je codais pour rendre des projets d'école. Après, je code en pensant à ce qui se passe quand ça casse : anticiper les cas tordus, poser des garde-fous, prévoir les alertes. Voir une de mes propres erreurs partir en prod m'a appris cette exigence de fiabilité bien mieux qu'un cours ne l'aurait fait."
+          body: "Avant MacWay, je codais surtout pour rendre des projets d'école, avec des tests et un cadre clair. En entreprise, l'exigence est différente : il faut anticiper les cas tordus, poser des garde-fous, prévoir ce qui se passe quand un service externe ne répond pas. C'est dans cette différence que se joue le vrai passage du code « école » au code « production », et c'est précisément ce que mon alternance m'a permis de franchir."
         },
         {
           type: 'takeaway',
           title: "Comprendre le business change la manière de coder",
-          body: "Trois ans aux côtés d'une équipe commerciale et d'une équipe marketing m'ont fait voir le code autrement. Une feature qui fait gagner du temps aux équipes vaut souvent plus qu'une feature techniquement brillante mais peu utilisée. Je me suis mis à chercher le pourquoi avant le comment, et c'est cette habitude que je garde le plus nettement de cette alternance."
+          body: "Trois ans au contact des équipes marketing et produit m'ont appris à voir le code autrement. Comprendre comment un e-commerce fonctionne à grande échelle, avec un large catalogue, des marges à protéger, des canaux de vente multiples, change la manière dont on conçoit chaque fonctionnalité. Une feature qui fait gagner du temps aux équipes vaut souvent plus qu'une feature techniquement brillante mais peu utilisée. Je cherche désormais le pourquoi avant le comment."
         }
       ]
     }
@@ -1117,7 +1125,7 @@ const projectsData: Record<string, Project> = {
     url: 'https://wedriv.com/',
     presentation: "WeDriv est un site de réservation VTC que j'ai développé seul de A à Z. Le site permet aux clients de réserver une course facilement : saisie des adresses avec autocomplete Google Places, visualisation du trajet sur une carte interactive, calcul du prix en temps réel via l'API Distance Matrix, choix du véhicule et paiement sécurisé par carte bancaire via Stripe.\n\nLe frontend est développé en React avec TypeScript pour une interface fluide et réactive. Le backend repose sur Symfony avec API Platform pour une API REST robuste et documentée. Google Maps est utilisé pour l'autocomplete d'adresses, le calcul de distances et l'affichage cartographique. Stripe gère les paiements avec vérification par webhook et traitement asynchrone via Symfony Messenger.\n\nUn back-office complet permet de gérer les réservations, les chauffeurs, les véhicules et les paiements. Le site est en production et déployé automatiquement.",
     objectives: {
-      context: "Projet personnel réalisé intégralement seul pour créer une solution de réservation VTC moderne et fonctionnelle. Le site est en ligne et opérationnel avec de vraies réservations et de vrais paiements.",
+      context: "Projet personnel mené pour mon père, chauffeur VTC, qui souhaitait disposer d'un site moderne pour gérer ses courses et ses clients en ligne. Il a défini les besoins essentiels du métier, je me suis chargé de tout le reste, de la conception à la mise en ligne. Le site est aujourd'hui en ligne et opérationnel avec de vraies réservations et de vrais paiements.",
       goals: "Permettre aux clients de réserver une course en moins de 2 minutes avec un prix transparent et un paiement sécurisé. Fournir un back-office complet pour la gestion de l'activité. Démontrer ma capacité à créer une application fullstack complète from scratch.",
       challenges: "Intégrer Google Maps (autocomplete, distance, affichage) avec une UX fluide malgré les latences API. Sécuriser les paiements Stripe de bout en bout (montants serveur, webhooks signés, idempotence). Concevoir une API robuste pour les réservations avec gestion des états (créée, confirmée, payée, terminée). Offrir une expérience temps réel sans perception d'attente.",
       risks: "Erreurs d'adresses ou distances incorrectes impactant le prix. Doubles débits ou paiements non traités. Latences API dégradant l'expérience utilisateur. Failles de sécurité sur les flux financiers."
@@ -1132,7 +1140,7 @@ const projectsData: Record<string, Project> = {
       "Création du back-office d'administration",
       "Mise en production et déploiement automatique"
     ],
-    actors: "Projet réalisé intégralement seul : conception, développement frontend et backend, intégration des APIs tierces, tests et déploiement. Validation des fonctionnalités avec des professionnels du VTC pour s'assurer de l'adéquation métier.",
+    actors: "Projet réalisé intégralement seul côté technique : conception, développement frontend et backend, intégrations, tests et mise en ligne. Le cahier des charges fonctionnel a été défini avec mon père, chauffeur VTC, qui a validé chaque étape pour s'assurer de l'adéquation métier.",
     results: {
       personal: "WeDriv m'a prouvé que je pouvais créer une application fullstack complète tout seul, de la conception au déploiement. J'ai appris à intégrer des APIs complexes (Google Maps, Stripe) et à sécuriser des flux financiers. Le plus formateur : gérer l'UX d'un parcours de réservation où chaque seconde d'attente compte.",
       business: "Le site est en production avec un parcours de réservation complet : saisie d'adresses, calcul de prix en temps réel via Google Maps, paiement sécurisé Stripe avec webhooks. Le back-office gère les réservations, chauffeurs et véhicules. L'interface est responsive et fonctionne sur mobile, tablette et desktop."
@@ -1201,26 +1209,23 @@ const projectsData: Record<string, Project> = {
     // === RICH CONTENT (v2 layout). Projet solo VTC, thème gold ===
     rich: {
       theme: 'gold',
-      tagline: "Un site de réservation VTC complet, conçu et développé seul, avec de vraies courses, de vrais paiements et de vrais clients.",
-      keyMetrics: [
-        { value: '< 2 min', label: 'pour réserver une course' },
-        { value: '2', label: 'APIs externes intégrées' },
-        { value: '0', label: 'incident de paiement' }
-      ],
+      tagline: "Un site de réservation VTC complet, conçu et développé seul pour mon père chauffeur, avec de vraies courses, de vrais paiements et de vrais clients.",
       presentation: [
-        "WeDriv est un site de réservation VTC que j'ai conçu, développé et mis en production seul, de A à Z. Le client saisit son adresse de départ et d'arrivée avec une autocomplétion Google, visualise son trajet sur une carte, voit le prix calculé en temps réel selon la distance, choisit son véhicule, puis paie par carte. La réservation est ensuite confirmée et suivie depuis un back-office. Côté technique, c'est du React et TypeScript en frontal, du Symfony avec API Platform derrière, Google Maps pour la cartographie et Stripe pour les paiements de bout en bout.",
-        "L'intérêt du projet n'est pas dans une brique prise isolément, chacune est abordable, mais dans leur addition : deux APIs externes à apprivoiser, de l'argent réel à ne jamais perdre, une UX qui doit rester fluide malgré la latence réseau, et une cohérence visuelle à tenir seul. C'est surtout le projet qui m'a fait comprendre ce que veut dire être responsable d'un site en prod tout seul. Quand quelque chose casse un dimanche soir, il n'y a personne d'autre que moi au bout du fil."
+        "WeDriv est un site de réservation VTC que j'ai imaginé, développé et mis en ligne seul. Le projet est parti d'une demande concrète de mon père, chauffeur VTC depuis plusieurs années. C'est lui qui m'a expliqué ce dont un site de ce type avait vraiment besoin pour être utile au métier : un parcours rapide côté client, des adresses fiables, un prix transparent, un paiement en ligne sécurisé, et un back-office capable de tout suivre au quotidien.",
+        "Concrètement, le client saisit son adresse de départ et d'arrivée avec une suggestion automatique, voit son trajet apparaître sur une carte, découvre le prix calculé en direct selon la distance, choisit son véhicule et paie en ligne. Il reçoit ensuite sa confirmation par mail, et tout est piloté depuis un back-office dédié.",
+        "Aucune brique prise séparément n'est exceptionnelle. Ce qui rend ce projet exigeant, c'est leur addition. Plusieurs services externes à brancher proprement sans qu'on en voie la latence. De l'argent réel à ne jamais perdre. Une interface qui doit rester fluide pendant que tout se joue en coulisses. Et une cohérence visuelle à tenir d'un bout à l'autre, sans designer pour rattraper.",
+        "C'est surtout le projet qui m'a appris ce que veut dire être responsable d'un site en ligne tout seul. Quand quelque chose casse un dimanche soir, il n'y a personne d'autre que moi au bout du fil. Cette responsabilité a changé ma manière de coder, durablement."
       ],
       objectives: [
-        "Permettre à un client de réserver une course en moins de deux minutes, avec un prix transparent et un paiement sécurisé",
-        "Intégrer proprement Google Maps (autocomplétion d'adresses, distance, affichage cartographique) malgré la latence des appels",
-        "Sécuriser les paiements de bout en bout, sans aucune possibilité de manipulation côté client",
-        "Fournir un back-office complet pour gérer les réservations, les chauffeurs et les véhicules",
-        "Démontrer que je sais concevoir, développer et mettre en production une application fullstack complète seul"
+        "Permettre à un client de réserver une course en quelques minutes, avec un prix transparent et un paiement sécurisé",
+        "Garder un parcours fluide alors que plusieurs services externes sont sollicités en coulisses",
+        "Sécuriser les paiements de bout en bout, sans la moindre zone d'ombre sur le montant ou la transaction",
+        "Mettre à disposition un back-office complet pour piloter les réservations, les chauffeurs et les véhicules au quotidien",
+        "Me prouver que je peux concevoir, développer et mettre en ligne une application complète, seul"
       ],
       context: {
         period: "Septembre 2025 à Avril 2026 (environ 7 mois en parallèle de l'école)",
-        framework: "Projet personnel autodidacte, hors cadre scolaire ou professionnel",
+        framework: "Projet personnel mené pour mon père, chauffeur VTC, en dehors de tout cadre scolaire ou client extérieur",
         mode: "100 % remote, en parallèle de mon alternance et de l'école",
         team: [
           { role: "Moi", description: "Toutes les casquettes : conception du parcours utilisateur, architecture technique, développement frontend et backend, intégration de Google Maps et Stripe, sécurisation des paiements, mise en production et déploiement automatique. Aucun rôle délégué. C'est ce qui rend le projet exigeant et formateur." }
@@ -1233,80 +1238,80 @@ const projectsData: Record<string, Project> = {
           "Mises en ligne progressives par fonctionnalité plutôt qu'en gros lots, pour repérer vite ce qui casse"
         ],
         stack: [
-          { label: "Frontend", value: "React avec TypeScript pour le typage strict, composants découpés et formulaires progressifs" },
-          { label: "Backend", value: "Symfony avec API Platform pour exposer une API REST propre et documentée" },
-          { label: "Base de données", value: "MySQL avec migrations versionnées" },
-          { label: "Cartographie", value: "Google Maps (autocomplétion d'adresses, calcul de distance, affichage du trajet)" },
-          { label: "Paiements", value: "Stripe avec vérification automatique des paiements et traitement asynchrone" },
-          { label: "Authentification", value: "JWT signé, rôles client / chauffeur / administrateur" },
-          { label: "Déploiement", value: "Mise en ligne automatisée à chaque mise à jour validée" }
+          { label: "Frontend", value: "React et TypeScript, composants découpés et formulaires progressifs pour rester lisible sur la durée" },
+          { label: "Backend", value: "Symfony, qui expose une API propre et documentée pour le site et le back-office" },
+          { label: "Base de données", value: "MySQL, avec un historique des modifications pour garder une trace de chaque évolution" },
+          { label: "Cartographie", value: "Google Maps pour la suggestion d'adresses, le calcul de distance et l'affichage du trajet" },
+          { label: "Paiements", value: "Stripe, avec confirmation des paiements vérifiée automatiquement en arrière-plan" },
+          { label: "Sécurité", value: "Connexions signées et trois rôles distincts : client, chauffeur, administrateur" },
+          { label: "Mise en ligne", value: "Déploiement automatisé à chaque mise à jour validée, sans manipulation manuelle" }
         ],
         stakes: [
-          "Démontrer ma capacité à concevoir et livrer une application fullstack complète en autonomie",
+          "Démontrer ma capacité à concevoir et livrer une application complète en autonomie",
           "Gérer un parcours sensible (paiement réel par carte) sans aucune possibilité d'erreur",
-          "Intégrer deux APIs externes complexes (Google Maps et Stripe) avec une UX qui reste fluide malgré leurs latences",
-          "Tenir une cohérence visuelle et un niveau de polish suffisant en solo, sans designer",
+          "Brancher plusieurs services externes en gardant une expérience fluide pour l'utilisateur",
+          "Tenir une cohérence visuelle et un niveau de finition suffisant en solo, sans designer",
           "Apprendre à mettre en production tout seul, ce qui est une compétence à part entière"
         ]
       },
       steps: [
         {
-          title: "Cadrage, choix techniques et API backend",
-          description: "Premières semaines : définir le parcours, choisir la stack et poser des fondations propres",
+          title: "Cadrage, choix techniques et fondations",
+          description: "Premières semaines : définir le parcours, choisir la stack et poser des bases propres",
           bullets: [
-            "Étude des sites VTC existants, puis définition du parcours client minimal : adresses, prix transparent, paiement, confirmation",
-            "Choix de Symfony avec API Platform côté serveur (API REST documentée quasi sans code) et React + TypeScript côté client",
-            "Modélisation des entités principales (utilisateurs, réservations, chauffeurs, véhicules, paiements) avant d'écrire le code",
-            "Authentification par JWT avec trois rôles distincts : client, chauffeur, administrateur",
-            "Validation stricte des données côté serveur, jamais de confiance aveugle au client, et états de réservation à transitions contrôlées",
-            "Tests manuels exhaustifs sur chaque point d'entrée API avant de développer le frontend"
+            "Étude des sites VTC existants, puis définition du parcours client minimal : saisie des adresses, prix transparent, paiement, confirmation",
+            "Choix de Symfony côté serveur et React côté client, pour une base solide qui supporte l'évolution du projet",
+            "Modélisation des grandes entités (utilisateurs, réservations, chauffeurs, véhicules, paiements) avant d'écrire la première ligne",
+            "Mise en place d'une authentification avec trois rôles distincts : client, chauffeur, administrateur",
+            "Validation systématique des données côté serveur, et états de réservation balisés pour éviter les transitions incohérentes",
+            "Tests manuels approfondis sur chaque point d'entrée du site avant de connecter l'interface"
           ]
         },
         {
-          title: "Intégration Google Maps avec UX fluide",
+          title: "Intégration de la cartographie",
           description: "Offrir une saisie d'adresses et un affichage de trajet rapides, malgré la latence des appels Google",
           bullets: [
-            "Autocomplétion d'adresses avec un délai entre les frappes pour limiter les appels et les coûts",
-            "Calcul de la distance et de la durée estimée via l'API Google avant l'affichage du prix",
-            "Affichage interactif du trajet sur une carte intégrée, avec tracé visible de A à B",
-            "Indicateurs visuels de chargement progressifs pendant les appels API, pour que l'utilisateur sente que ça avance",
-            "Gestion gracieuse des erreurs (adresse introuvable, API indisponible) sans réinitialiser la saisie",
-            "Mise en cache des trajets fréquents pour éviter les appels redondants"
+            "Suggestion automatique d'adresses pendant la frappe, avec un petit délai pour limiter le nombre d'appels et les coûts",
+            "Récupération de la distance et de la durée estimée avant l'affichage du prix",
+            "Tracé interactif du trajet sur une carte intégrée au formulaire, visible de A à B",
+            "Indicateurs visuels de progression pendant les appels en cours, pour que l'utilisateur sente que ça avance",
+            "Gestion propre des erreurs (adresse introuvable, service indisponible) sans réinitialiser la saisie déjà faite",
+            "Mémorisation des trajets fréquents pour éviter de refaire le même calcul plusieurs fois"
           ]
         },
         {
-          title: "Paiement sécurisé Stripe",
-          description: "Le morceau le plus sensible : gérer de vraies transactions par carte bancaire sans aucune faille",
+          title: "Paiement sécurisé",
+          description: "Le morceau le plus sensible : gérer de vraies transactions par carte sans aucune faille",
           bullets: [
-            "Calcul du montant uniquement côté serveur, jamais côté navigateur, pour empêcher toute manipulation",
-            "Mise en place de notifications automatiques (webhooks) signées par Stripe et vérifiées avant traitement",
-            "Traitement asynchrone des notifications pour ne jamais bloquer l'utilisateur ni Stripe",
-            "Garde-fou pour qu'une même notification ne soit jamais traitée deux fois (ce qui éviterait des doubles confirmations)",
-            "Gestion explicite de tous les cas problématiques : paiement refusé, expiration, double envoi, timeout",
-            "Journalisation détaillée de chaque étape du paiement pour pouvoir tracer un litige a posteriori"
+            "Calcul du montant uniquement côté serveur, jamais côté navigateur, pour qu'aucune manipulation ne soit possible",
+            "Mise en place de notifications automatiques signées par le prestataire de paiement et vérifiées avant traitement",
+            "Traitement de ces notifications en arrière-plan, pour ne jamais bloquer le client ni le prestataire",
+            "Garde-fou pour qu'une même notification ne soit jamais traitée deux fois, évitant les doubles confirmations",
+            "Gestion explicite de tous les cas problématiques : paiement refusé, expiration, double envoi, coupure réseau",
+            "Journal détaillé de chaque étape, pour pouvoir reconstituer une transaction plusieurs mois après les faits"
           ]
         },
         {
-          title: "Frontend React et parcours de réservation",
-          description: "Construire l'interface client en gardant la fluidité comme priorité absolue",
+          title: "Parcours de réservation côté client",
+          description: "Construire l'interface en gardant la fluidité comme priorité absolue",
           bullets: [
-            "Formulaire de réservation progressif : chaque étape ne révèle que ce dont l'utilisateur a besoin",
+            "Formulaire de réservation progressif : chaque étape ne révèle que ce dont l'utilisateur a besoin sur le moment",
             "Affichage du prix en temps réel dès que les adresses sont saisies, sans avoir à cliquer pour calculer",
             "Carte interactive intégrée au formulaire, qui se met à jour pendant la saisie",
-            "Choix du véhicule avec récap clair et confirmation visuelle de la sélection",
-            "Page de paiement sobre, avec récap de la course et bouton « Payer » bien visible",
-            "Confirmation visuelle de la réservation avec un récap complet (trajet, véhicule, prix, mode de paiement)"
+            "Choix du véhicule avec récapitulatif clair et confirmation visuelle de la sélection",
+            "Page de paiement sobre, avec récapitulatif de la course et bouton « Payer » bien visible",
+            "Confirmation finale avec un récapitulatif complet (trajet, véhicule, prix, mode de paiement) et envoi par mail"
           ]
         },
         {
-          title: "Back-office d'administration et mise en production",
+          title: "Back-office d'administration et mise en ligne",
           description: "Outiller la gestion du quotidien et basculer sur un site réellement utilisable",
           bullets: [
-            "Tableau de bord listant les réservations avec filtres et pagination",
-            "Gestion CRUD des chauffeurs et des véhicules (ajout, modification, disponibilité)",
-            "Suivi des paiements avec leur statut (confirmé, en attente, remboursé) et lien vers Stripe pour drill-down",
-            "Sécurisation de l'accès au back-office avec vérification stricte du rôle administrateur",
-            "Mise en production avec déploiement automatisé à chaque mise à jour validée",
+            "Tableau de bord listant les réservations, avec filtres et pagination",
+            "Gestion complète des chauffeurs et des véhicules (ajout, modification, disponibilité)",
+            "Suivi des paiements avec leur statut (confirmé, en attente, remboursé) et accès direct au détail chez le prestataire",
+            "Accès au back-office strictement réservé au rôle administrateur, sans porte dérobée possible",
+            "Mise en ligne avec déploiement automatisé à chaque mise à jour validée, pour pouvoir corriger un bug rapidement",
             "Tests utilisateurs avec quelques personnes du métier (chauffeurs, professionnels du VTC) pour valider l'ergonomie"
           ]
         }
@@ -1317,89 +1322,85 @@ const projectsData: Record<string, Project> = {
           description: "Toutes les casquettes : conception du parcours, architecture technique, développement frontend et backend, intégration de Google Maps et Stripe, mise en production. Aucun rôle délégué. La seule contrepartie : pas de relecteur de code, pas de regard extérieur sur les choix d'architecture, pas de duo pour débugger un cas tordu. Ce qui m'a forcé à être plus rigoureux dans la validation manuelle."
         },
         {
-          role: "Professionnels du VTC (testeurs externes)",
-          description: "Quelques chauffeurs et personnes du métier ont testé le parcours de réservation et le back-office. Leurs retours ont été précieux sur la partie métier (ce qui leur faciliterait vraiment la vie au quotidien) et sur l'ergonomie du back-office (ce qu'ils auraient besoin de voir en un coup d'œil). C'est grâce à eux que j'ai simplifié plusieurs écrans qui étaient trop chargés dans la première version."
-        },
-        {
-          role: "Testeurs ponctuels (amis, proches)",
-          description: "Sollicités à différents moments pour parcourir la réservation comme de vrais clients. Leurs retours ont surtout porté sur la fluidité perçue (« je n'ai pas compris à quoi servait ce bouton », « j'ai cru que la page avait planté »). Des feedbacks que je n'aurais jamais formulés moi-même puisque je connaissais déjà le parcours par cœur."
+          role: "Mon père, chauffeur VTC (à l'origine du besoin)",
+          description: "C'est lui qui m'a expliqué ce qu'un site de réservation VTC devait absolument couvrir pour être utile au quotidien : la simplicité du parcours client, la fiabilité des adresses, la clarté du prix, la robustesse du paiement et la lisibilité du back-office. Il a relu les écrans à plusieurs étapes, validé la cohérence métier, et signalé tout ce qui ne ressemblait pas au vrai quotidien d'un chauffeur. Plusieurs simplifications du back-office viennent directement de ses remarques, en particulier sur les premiers écrans qui étaient trop chargés."
         }
       ],
       results: {
         personal: {
           technical: [
-            "Application fullstack complète conçue, développée et mise en production en autonomie",
-            "Intégration propre de deux APIs externes complexes (Google Maps et Stripe) avec gestion fine des latences et des erreurs",
-            "Sécurisation de paiements réels de bout en bout, avec validation côté serveur et gestion explicite des cas problématiques",
-            "Génération automatique d'une API REST documentée grâce à API Platform, ce qui m'a fait gagner un temps considérable",
-            "Compréhension concrète des enjeux d'UX sur un parcours sensible : chaque seconde d'attente compte"
+            "Une application complète conçue, développée et mise en ligne seul, de la première maquette à la production",
+            "Intégration propre de plusieurs services externes, avec une attention particulière à la latence et aux erreurs possibles",
+            "Sécurisation de paiements réels de bout en bout, avec gestion explicite de tous les cas problématiques",
+            "Une interface qui reste fluide pour l'utilisateur, même quand beaucoup de choses se jouent en coulisses",
+            "Compréhension concrète de ce que coûte chaque seconde d'attente sur un parcours sensible comme un paiement"
           ],
           organizational: [
-            "Capacité à structurer un projet long en solo et à le mener jusqu'en production",
+            "Capacité à structurer un projet long en solo et à le mener jusqu'à la mise en ligne",
             "Discipline pour avancer régulièrement en parallèle de l'école et de l'alternance, même quand la motivation baisse",
             "Validation manuelle approfondie des parcours sensibles avant chaque mise en ligne",
-            "Capacité à déboguer seul en production, ce qui demande une vraie discipline mentale",
-            "Auto-formation continue sur les sujets que je découvrais (Stripe, API Platform, intégration cartographique)"
+            "Capacité à diagnostiquer et corriger un bug en production seul, ce qui demande une vraie discipline mentale",
+            "Auto-formation continue sur les sujets que je découvrais en chemin"
           ],
-          conclusion: "WeDriv m'a appris ce que veut dire « être responsable d'un site en production tout seul ». Quand un bug tombe en pleine soirée, il n'y a pas d'astreinte à appeler. Cette responsabilité change la manière de coder : on anticipe davantage, on met plus de garde-fous, on journalise tout. C'est aussi le projet qui m'a confirmé que je peux livrer une application complète sans équipe. Pas parce que c'est confortable, mais parce que je sais maintenant que c'est faisable."
+          conclusion: "WeDriv m'a appris ce que veut dire être responsable d'un site en production tout seul. Quand un bug tombe en pleine soirée, il n'y a pas d'astreinte à appeler. Cette responsabilité change la manière de coder. On anticipe davantage, on met plus de garde-fous, on garde une trace de tout. C'est aussi le projet qui m'a confirmé que je peux livrer une application complète sans équipe. Pas parce que c'est confortable, mais parce que je sais désormais que c'est faisable."
         },
         business: {
           achievements: [
-            "Site en production avec un parcours de réservation complet, fonctionnel sur mobile et desktop",
-            "Aucun incident de sécurité ou de paiement depuis la mise en ligne",
-            "Back-office complet permettant de gérer réservations, chauffeurs, véhicules et paiements",
+            "Site en ligne avec un parcours de réservation complet, fonctionnel sur téléphone, tablette et ordinateur",
+            "Aucun incident de sécurité ni de paiement depuis la mise en ligne",
+            "Back-office complet permettant de piloter réservations, chauffeurs, véhicules et paiements depuis une seule interface",
             "Architecture modulaire qui facilite l'ajout de nouvelles fonctionnalités sans tout réécrire",
-            "Documentation automatique de l'API, ce qui rendrait facile l'intégration de partenaires futurs"
+            "Documentation automatique de l'API, ce qui rendrait simple l'intégration d'un partenaire ou d'un outil tiers plus tard"
           ],
           satisfaction: [
-            "Validation positive du parcours par les testeurs, en particulier sur la fluidité perçue",
-            "Retour favorable des professionnels du VTC sur l'ergonomie du back-office après simplification",
-            "Aucune remontée client sur des incohérences de prix ou des problèmes de paiement depuis la mise en production",
-            "Le site est suffisamment crédible pour être présenté comme un projet professionnel à des recruteurs"
+            "Validation positive du parcours par les testeurs, en particulier sur la fluidité ressentie",
+            "Retour favorable des professionnels du VTC sur l'ergonomie du back-office après plusieurs simplifications",
+            "Aucune remontée client sur une incohérence de prix ou un problème de paiement depuis la mise en ligne",
+            "Un site suffisamment crédible pour être présenté comme un projet professionnel à des recruteurs"
           ],
-          conclusion: "WeDriv tourne, prend de vrais paiements sans incident, et pourrait devenir une activité réelle si je décidais de le pousser. Pour l'instant, c'est surtout une preuve solide : je sais emmener une application fullstack du croquis jusqu'au site en ligne qui encaisse de l'argent. C'est exactement ce que je voulais démontrer avec ce projet, et c'est fait."
+          conclusion: "WeDriv tourne, prend de vrais paiements sans incident, et pourrait devenir une activité réelle si je décidais de pousser plus loin. Pour l'instant, c'est surtout une preuve solide : je sais emmener une application complète d'une page blanche jusqu'à un site qui encaisse de l'argent. C'est exactement ce que je voulais démontrer avec ce projet, et c'est fait."
         }
       },
       aftermath: {
         immediate: [
           "Mise en ligne du site avec un nom de domaine dédié et certificat sécurisé",
-          "Configuration des emails transactionnels (confirmation de réservation, reçu de paiement)",
-          "Activation des paiements réels (sortie du mode test Stripe)",
-          "Mise en place du déploiement automatique pour pouvoir corriger un bug rapidement"
+          "Mise en place des emails automatiques (confirmation de réservation, reçu de paiement)",
+          "Activation des paiements réels, en sortie du mode test",
+          "Déploiement automatisé en place, pour pouvoir corriger un bug rapidement sans manipulation manuelle"
         ],
         distant: [
-          "Ajout d'une couche de tests automatisés sur les parties critiques (calcul de prix, paiement, transitions de réservation)",
-          "Internationalisation du site (multilangue) prévue dès la conception mais ajoutée plus tard",
-          "Système de notation des chauffeurs et fidélisation des clients",
+          "Ajout d'une couche de tests automatisés sur les parties les plus critiques (calcul de prix, paiement, transitions de réservation)",
+          "Internationalisation du site, prévue dès la conception mais ajoutée plus tard",
+          "Système de notation des chauffeurs et de fidélisation des clients",
           "Notifications mobiles pour les chauffeurs (acceptation de course, suivi en temps réel)",
-          "Discussion avec des professionnels du VTC pour évaluer un usage commercial réel"
+          "Discussions avec des professionnels du VTC pour évaluer un usage commercial réel"
         ],
         today: [
-          "Le site est en production et continue de fonctionner",
-          "Sur les flux d'argent, je ne code plus pareil depuis : montant calculé côté serveur, journalisation de chaque étape, gestion explicite de tous les cas d'erreur. C'est devenu non négociable pour moi",
+          "Le site est en ligne et continue de fonctionner sans accroc",
+          "Sur les flux d'argent, je ne code plus pareil depuis. Montant calculé côté serveur, traçabilité de chaque étape, gestion explicite de tous les cas d'erreur. C'est devenu non négociable pour moi",
           "Je garde de ce projet la conviction qu'on apprend dix fois plus vite quand on doit gérer toute la chaîne soi-même, plutôt qu'en restant sur une seule couche"
         ]
       },
       critique: [
         {
           type: 'lesson',
-          title: "Stripe est plus compliqué qu'il n'y paraît",
-          body: "L'intégration de base se fait vite. Ce qui prend du temps, c'est tout le reste : paiement refusé, double envoi, expiration, timeout réseau. J'ai découvert ces cas un par un, souvent en production, alors que la documentation Stripe les couvre. J'aurais gagné plusieurs jours à la lire en profondeur avant de me lancer plutôt qu'en pompier."
+          title: "Le paiement est plus compliqué qu'il n'y paraît",
+          body: "L'intégration de base se fait vite. Ce qui prend du temps, c'est tout le reste. Paiement refusé, double envoi, expiration, coupure réseau. J'ai découvert ces cas un par un, souvent en production, alors que la documentation du prestataire les couvrait. J'aurais gagné plusieurs jours à la lire en profondeur avant de me lancer, plutôt qu'à courir derrière les surprises."
         },
         {
           type: 'lesson',
-          title: "Le multilangue, ça se pense au démarrage",
-          body: "J'ai tout écrit en français en me disant que je traduirais plus tard. Quand j'ai voulu une seconde langue, j'ai dû repasser sur des textes éparpillés dans tout le code. Si on pense avoir besoin du multilangue un jour, on l'architecture dès le début, même si on ne livre qu'une langue au lancement. C'est presque gratuit à poser au départ, coûteux à rattraper après."
+          title: "Le multilangue se pense dès le démarrage",
+          body: "J'ai tout écrit en français en me disant que je traduirais plus tard. Quand j'ai voulu une seconde langue, j'ai dû reprendre des textes éparpillés un peu partout. Si on pense avoir besoin du multilangue un jour, on l'architecture dès le début, même si on ne livre qu'une langue au lancement. C'est presque gratuit à poser au départ, coûteux à rattraper après coup."
         },
         {
           type: 'lesson',
           title: "La rapidité ressentie compte autant que la vraie",
-          body: "Au début, aucun retour visuel pendant les appels Google Maps. Les gens croyaient que la page avait planté et rechargeaient. Des indicateurs de chargement progressifs ont changé la perception du site alors que la latence réelle, elle, n'avait pas bougé d'une milliseconde. Depuis, je traite l'attente comme une partie de l'interface, pas comme un détail technique."
+          body: "Au début, aucun retour visuel pendant les appels à la cartographie. Les gens croyaient que la page avait planté et rechargeaient. Des indicateurs de progression ont changé la perception du site alors que le temps d'attente réel, lui, n'avait pas bougé d'une milliseconde. Depuis, je traite l'attente comme une partie de l'interface, pas comme un détail technique à ignorer."
         },
         {
           type: 'takeaway',
-          title: "Mettre en production seul, c'est un cap",
-          body: "Avant WeDriv, mes mises en ligne étaient des projets d'école faits pour être notés. Là, il a fallu un domaine, un certificat, des emails transactionnels, Stripe en mode live, du monitoring, et personne pour rattraper une erreur. C'est un cap mental autant que technique. Une fois franchi, la mise en production cesse d'être l'étape qui fait peur pour devenir la suite normale du développement. C'est ce passage que je retiens vraiment de ce projet."
+          title: "Mettre en ligne seul, c'est un cap",
+          body: "Avant WeDriv, mes mises en ligne étaient des projets d'école faits pour être notés. Là, il a fallu un domaine, un certificat, des emails automatiques, de vrais paiements, du suivi, et personne pour rattraper une erreur. C'est un cap mental autant que technique. Une fois franchi, la mise en ligne cesse d'être l'étape qui fait peur pour devenir la suite normale du développement. C'est ce passage que je retiens vraiment de ce projet."
         }
       ]
     }
@@ -1407,11 +1408,19 @@ const projectsData: Record<string, Project> = {
 
   'followdeen': {
     title: 'FollowDeen - Marketplace de Cession de Business',
-    description: "Marketplace francophone pour acheter, vendre et s'associer autour de business en ligne, avec escrow Stripe réel.",
+    description: "Marketplace francophone pour acheter, vendre et s'associer autour de business en ligne (sites, boutiques, applications), avec un paiement sécurisé bloqué jusqu'à la validation de la vente.",
     tags: ['Java', 'Spring Boot', 'Next.js', 'React', 'TypeScript', 'PostgreSQL', 'Stripe', 'Tailwind CSS', 'Docker'],
     year: '2025-2026',
     logo: 'assets/logos/followdeen.svg',
-    presentation: "FollowDeen est une marketplace que je développe seul pour permettre l'achat, la vente et la mise en relation autour de business en ligne (e-commerce, SaaS, applications, projets entrepreneuriaux). L'idée est de proposer une alternative aux plateformes existantes (Flippa, Acquire.com, Dotmarket, Empire Flippers) avec un cadre de confiance fort : vérification humaine des annonces, escrow Stripe réel et grille tarifaire dégressive (8 % en dessous de 5 k€, 5 % entre 5 et 50 k€, 3 % au-delà), sans abonnement.\n\nLa stack repose sur Spring Boot 3.3 et PostgreSQL 16 côté backend, Next.js 15 (App Router, RSC) et Tailwind CSS v4 côté frontend, le tout orchestré par Docker Compose en local. La logique financière est portée par Stripe Connect en mode Separate Charges & Transfers : les fonds restent bloqués sur le compte plateforme jusqu'à validation de la transaction, avant d'être libérés vers le vendeur. Au-delà de la marketplace, le projet intègre une brique « réseau professionnel » pour mettre en relation porteurs de projets et associés.\n\nLe MVP est livré à environ 98 % avec un flow transaction validé de bout en bout sur 9 scénarios différents (happy path, refus d'intérêt, refus d'offre, paiement échoué, annulations pré et post-paiement, signalement de manquement, demande d'annulation post-livraison, changement d'avis acheteur). La mise en production est volontairement repoussée pour finir le polish design et écrire la couverture de tests automatisés.",
+    previewImages: [
+      'assets/previews/followdeen/01.png',
+      'assets/previews/followdeen/02.png',
+      'assets/previews/followdeen/03.png',
+      'assets/previews/followdeen/04.png',
+      'assets/previews/followdeen/05.png',
+      'assets/previews/followdeen/06.png'
+    ],
+    presentation: "FollowDeen est une marketplace que je développe seul pour permettre l'achat, la vente et la mise en relation autour de business en ligne (e-commerce, SaaS, applications, projets entrepreneuriaux). L'idée est de proposer une alternative aux plateformes existantes (Flippa, Acquire.com, Dotmarket) avec un cadre de confiance fort : vérification humaine des annonces, escrow Stripe réel et grille tarifaire dégressive (8 % en dessous de 5 k€, 5 % entre 5 et 50 k€, 3 % au-delà), sans abonnement.\n\nLa stack repose sur Spring Boot 3.3 et PostgreSQL 16 côté backend, Next.js 15 (App Router, RSC) et Tailwind CSS v4 côté frontend, le tout orchestré par Docker Compose en local. La logique financière est portée par Stripe Connect en mode Separate Charges & Transfers : les fonds restent bloqués sur le compte plateforme jusqu'à validation de la transaction, avant d'être libérés vers le vendeur. Au-delà de la marketplace, le projet intègre une brique « réseau professionnel » pour mettre en relation porteurs de projets et associés.\n\nLe MVP est livré à environ 98 % avec un flow transaction validé de bout en bout sur 9 scénarios différents (happy path, refus d'intérêt, refus d'offre, paiement échoué, annulations pré et post-paiement, signalement de manquement, demande d'annulation post-livraison, changement d'avis acheteur). La mise en production est volontairement repoussée pour finir le polish design et écrire la couverture de tests automatisés.",
     objectives: {
       context: "Projet personnel mené en solo avec l'ambition de livrer une marketplace complète prête pour la production : moteur de recherche full-text, transactions avec escrow, messagerie contextuelle, notifications, back-office d'administration et de finances. Le défi principal est de tenir une exigence d'industrialisation (sécurité, observabilité, robustesse Stripe) sans équipe.",
       goals: "Concevoir et développer une marketplace fullstack avec un vrai escrow Stripe (pas un simple Checkout). Modéliser proprement une state machine de transaction non triviale (9 états, transitions conditionnelles selon le rôle, refunds partiels). Maintenir la cohérence visuelle et UX sur ~24 pages frontend en solo. Préparer un déploiement VPS auto-hébergé (Hetzner + Docker + Nginx + Let's Encrypt).",
@@ -1510,7 +1519,7 @@ const projectsData: Record<string, Project> = {
     // === RICH CONTENT (v2 layout). Projet 100 % autodidacte, thème emerald ===
     rich: {
       theme: 'emerald',
-      tagline: "Marketplace fullstack menée en solo. De l'idée à la mise en production, sans équipe ni designer.",
+      tagline: "Mon projet personnel le plus ambitieux. Une marketplace pour acheter et revendre des business en ligne, conçue et développée seul, avec l'idée d'en vivre à terme.",
       keyMetrics: [
         { value: '~98 %', label: 'MVP livré' },
         { value: '13', label: 'migrations base' },
@@ -1519,9 +1528,9 @@ const projectsData: Record<string, Project> = {
         { value: '1', label: 'développeur (moi)' }
       ],
       presentation: [
-        "FollowDeen est une marketplace que je conçois et développe seul, pour permettre l'achat, la vente et la mise en relation autour de business en ligne (e-commerce, SaaS, applications, projets entrepreneuriaux). Je positionne le produit comme une alternative aux plateformes existantes (Flippa, Acquire.com, Dotmarket, Empire Flippers) avec un cadre de confiance plus fort : vérification humaine des annonces, escrow réel sur le paiement, et grille tarifaire dégressive plus accessible (8 % en dessous de 5 k€, 5 % entre 5 et 50 k€, 3 % au-delà), sans abonnement.",
-        "Le projet est mené 100 % en autodidacte, en parallèle de ma vie pro et scolaire. Pas d'équipe, pas de designer, pas de relecteur de code. Tout repose sur ma propre organisation : j'ai planifié les tâches en amont, défini ce qu'il fallait pour livrer un MVP, et tenu un suivi structuré sur toute la durée pour ne pas perdre le fil. C'est cette rigueur qui m'a permis de tenir un projet de cette ampleur sur plusieurs mois sans flotter.",
-        "FollowDeen est aussi mon laboratoire pour pousser des sujets techniques que je n'aurais pas forcément touchés ailleurs : un vrai escrow sur le paiement (les fonds sont bloqués sur la plateforme jusqu'à validation, pas un simple paiement direct), une logique de transaction à plusieurs étapes (9 états selon que l'acheteur paie, valide ou annule), et une couche SEO complète. C'est aussi le projet où j'ai le plus appris sur ma propre tendance à vouloir tout faire au lieu de livrer."
+        "FollowDeen part d'un constat simple. Beaucoup de gens cherchent à revendre leur site, leur boutique en ligne, leur application ou leur projet entrepreneurial, mais les plateformes qui existent aujourd'hui (Flippa, Acquire.com, Dotmarket) sont peu accessibles, souvent anglophones, et n'inspirent pas toujours confiance. Je veux proposer une alternative francophone, plus simple à prendre en main et plus rassurante : vérification humaine des annonces, paiement bloqué jusqu'à la validation de la vente (le vendeur n'est payé qu'une fois l'acheteur satisfait), et commission dégressive accessible (8 % en dessous de 5 k€, 5 % entre 5 et 50 k€, 3 % au-delà), sans abonnement.",
+        "C'est un projet personnel que je mène à long terme, en parallèle de ma vie pro et scolaire. L'ambition, à terme, c'est de le mettre en ligne, d'attirer mes premiers utilisateurs et d'en tirer un revenu via les commissions. Le projet est mené 100 % en autodidacte. Pas d'équipe, pas de designer, pas de relecteur de code. Tout repose sur ma propre organisation : planification en amont, suivi structuré sur toute la durée, scénarios rejoués manuellement à chaque grand changement. C'est cette rigueur qui m'a permis de tenir un projet de cette ampleur sur plusieurs mois sans flotter.",
+        "FollowDeen est aussi mon terrain pour pousser des sujets que je n'aurais pas forcément touchés ailleurs : un vrai paiement séquestré (les fonds restent bloqués sur la plateforme avant d'être versés au vendeur), une logique de transaction à plusieurs étapes (selon que l'acheteur paie, valide ou annule), et une vraie attention portée au référencement. C'est aussi le projet qui m'a le plus appris sur ma propre tendance à vouloir tout faire au lieu de livrer."
       ],
       objectives: [
         "Concevoir et développer une marketplace complète avec un vrai escrow sur le paiement",
@@ -1532,7 +1541,7 @@ const projectsData: Record<string, Project> = {
         "Apprendre à arbitrer seul entre exigence produit et réalité de mise en marché"
       ],
       context: {
-        period: "Janvier 2025 à aujourd'hui (MVP à ~98 % en mai 2026)",
+        period: "septembre 2025 à aujourd'hui (MVP à ~98 % en mai 2026)",
         framework: "Projet personnel autodidacte, hors cadre scolaire ou professionnel",
         mode: "100 % remote, en parallèle de ma vie pro et scolaire (soirs, week-ends, jours dédiés)",
         team: [
@@ -1555,16 +1564,16 @@ const projectsData: Record<string, Project> = {
           { label: "SEO", value: "Méta-données dynamiques, sitemap, données structurées pour les moteurs de recherche" }
         ],
         stakes: [
-          "Démontrer ma capacité à mener un projet ambitieux en autonomie complète, de l'idée à la mise en production",
-          "Pousser des sujets techniques que je n'aurais pas forcément touchés en alternance (escrow, machine à états, conditions de course)",
-          "Construire un actif personnel : si la mise en marché réussit, c'est un revenu potentiel",
-          "Crédibiliser mon profil pour les futures candidatures avec un projet réel en production"
+          "Démontrer ma capacité à mener un projet ambitieux en autonomie complète, de l'idée à la mise en ligne",
+          "Me confronter à des sujets que je n'aurais pas forcément touchés ailleurs (paiement séquestré, transaction en plusieurs étapes, sécurité)",
+          "Construire un actif personnel sur le long terme. Si la mise en ligne fonctionne, c'est aussi une source de revenu potentielle",
+          "Crédibiliser mon profil pour mes futures candidatures avec un projet réel et complet"
         ],
         risks: [
           "Surcharge de scope qui repousse la mise en marché. Déjà arrivé, plusieurs semaines perdues",
           "Bugs sur le paiement avec impact financier direct sur de vrais utilisateurs. L'organisation rigoureuse et les scénarios joués manuellement sont aujourd'hui mon principal filet",
           "Mixer le travail, l'école et un projet personnel ambitieux. Le vrai défi sur la durée, qui se gère à coup de discipline et de sessions structurées",
-          "Décalage entre ce que je sais bien faire (technique) et ce que demande la mise en marché (marketing, communauté, communication). Un vrai inconnu pour moi"
+          "Décalage entre ce que je sais bien faire et ce que demande la mise en marché (marketing, communauté, communication). Un vrai inconnu pour moi"
         ]
       },
       steps: [
@@ -1616,7 +1625,7 @@ const projectsData: Record<string, Project> = {
           title: "Frontend : une vingtaine de pages cohérentes",
           description: "Construire une application complète et propre en solo, sans designer",
           bullets: [
-            "Mix entre rendu côté serveur (pour le SEO et la rapidité) et rendu côté client (pour l'interactivité)",
+            "Mix entre rendu côté serveur pour le SEO et la rapidité et rendu côté client pour l'interactivité",
             "Landing page refondue trois fois pour atteindre une UX juste. La première version était trop chargée",
             "Marketplace avec recherche, filtres, pagination, tri, page détail à deux colonnes, partage et favoris",
             "Espace utilisateur : profil, mes annonces, mes ventes et achats, transactions actives, messages, favoris",
@@ -1644,43 +1653,39 @@ const projectsData: Record<string, Project> = {
         {
           role: "Beta-testeurs (amis développeurs et entrepreneurs)",
           description: "Sollicités à des moments-clés pour tester la landing et le parcours d'achat / vente. Leurs retours ont déclenché les deux dernières refontes de la landing. C'est eux qui ont mis le doigt sur le fait que la première version sentait trop le template marketing et qu'il fallait simplifier."
-        },
-        {
-          role: "Communautés en ligne",
-          description: "Échanges sur le concept, le positionnement et la grille tarifaire. M'ont confirmé que la promesse (escrow réel + vérification humaine + commission dégressive) était lisible et alignée avec les attentes. Sans ces retours externes, je serais resté enfermé dans ma propre vision du projet."
         }
       ],
       results: {
         personal: {
           technical: [
-            "Intégration d'un vrai escrow sur le paiement (les fonds sont bloqués sur la plateforme jusqu'à validation, puis libérés vers le vendeur)",
-            "Modélisation et validation manuelle d'une logique de transaction non triviale (9 états, selon que l'acheteur paie, valide, annule ou signale)",
-            "Architecture en plusieurs couches de défense sur le paiement (pour anticiper les conditions de course et les remboursements automatiques)",
-            "Couche SEO complète (méta-données dynamiques, sitemap, données structurées) intégrée dès la conception",
-            "Maîtrise complète d'une stack moderne en autonomie : backend Java / Spring Boot, frontend Next.js / React, base PostgreSQL"
+            "Intégration d'un vrai escrow sur le paiement",
+            "Modélisation et validation manuelle d'une logique de transaction non triviale",
+            "Architecture en plusieurs couches de défense sur le paiement",
+            "Couche SEO complète intégrée dès la conception",
+            "Maîtrise complète d'une stack moderne en autonomie"
           ],
           organizational: [
             "Capacité à planifier et structurer un projet ambitieux sur plusieurs mois sans encadrement",
-            "Validation manuelle structurée des parcours utilisateur (9 scénarios formalisés rejoués à chaque changement)",
-            "Auto-formation continue sur les sujets techniques que je découvrais (paiements, rendu côté serveur, animations)",
+            "Validation manuelle structurée des parcours utilisateur",
+            "Auto-formation continue sur les sujets techniques que je découvrais",
             "Capacité à arbitrer seul entre l'envie de tout perfectionner et la nécessité de livrer (mal joué la première fois, leçon retenue)",
             "Discipline pour avancer sur la durée même quand la motivation baisse. Particulièrement difficile en solo"
           ],
-          conclusion: "FollowDeen m'a mis face à une tension que je ne connaissais pas vraiment : « tout vouloir bien faire » contre « livrer une première version ». Les deux se tirent dessus en permanence, et seul, sans personne pour me freiner, je penche systématiquement vers le perfectionnisme. Une première version qui sort vaut mieux qu'une version parfaite qui dort dans un dépôt. Apprendre ça dans ma propre chair, en voyant mon scope déraper, c'est le vrai apprentissage de ce projet."
+          conclusion: "FollowDeen m'a mis face à une tension que je ne connaissais pas vraiment : « tout vouloir bien faire » contre « livrer une première version ». je penche systématiquement vers le perfectionnisme. Une première version qui sort vaut mieux qu'une version parfaite qui dort dans un dépôt, c'est le vrai apprentissage de ce projet."
         },
         business: {
           achievements: [
             "MVP livré à environ 98 %, prêt à passer en production une fois le polish design terminé",
             "Une vingtaine de pages frontend, une logique de paiement complète, un back-office de modération et une page de suivi des finances",
-            "9 scénarios de transaction validés de bout en bout (parcours nominal, refus, paiement échoué, annulations, signalement, remboursement post-livraison)",
-            "Architecture prête pour la mise en production (environnement local fonctionnel, mise en ligne planifiée)",
+            "9 scénarios de transaction validés de bout en bout",
+            "Architecture prête pour la mise en production",
             "Couche SEO et accessibilité intégrées dès la conception, plutôt que rajoutées en bout de course"
           ],
           satisfaction: [
             "Validation positive de la landing par les beta-testeurs après les trois refontes",
             "Concept et grille tarifaire validés par les communautés en ligne",
             "Aucun incident sur les flux financiers lors des scénarios joués en mode test",
-            "Le projet est crédible techniquement aux yeux de mes pairs développeurs"
+            "Le projet est crédible techniquement aux yeux de autres développeurs"
           ],
           conclusion: "FollowDeen est prêt à passer en production une fois le polish design terminé et quelques tests automatisés écrits. La vraie question n'est plus « est-ce que ça tient techniquement ». J'ai la réponse. Mais « est-ce que je sais faire le marketing ». C'est un changement complet d'orientation qui sera ma prochaine étape, et c'est une compétence que je vais devoir apprendre."
         }
@@ -1704,7 +1709,6 @@ const projectsData: Record<string, Project> = {
           "MVP à environ 98 %, encore en local en mode test",
           "Polish design en cours sur quelques pages secondaires",
           "Préparation des visuels pour la landing",
-          "Relecture juridique des conditions générales par un avocat avant l'ouverture au grand public"
         ]
       },
       critique: [
@@ -1880,5 +1884,31 @@ export class ProjectDetailComponent {
 
   getSkillLogo(skillId: string): string | undefined {
     return this.skillsInfo[skillId]?.logo;
+  }
+
+  // Galerie preview (projets pas encore en ligne)
+  lightboxImage = signal<string | null>(null);
+
+  scrollToPreview(): void {
+    document.getElementById('preview-gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  scrollToAnnexes(): void {
+    document.getElementById('annexes-gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  openLightbox(src: string): void {
+    this.lightboxImage.set(src);
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeLightbox(): void {
+    this.lightboxImage.set(null);
+    document.body.style.overflow = '';
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.lightboxImage()) this.closeLightbox();
   }
 }

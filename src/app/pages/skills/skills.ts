@@ -17,10 +17,10 @@ export class SkillsComponent  {
   skills = signal<Skill[]>([
     // COMPÉTENCES TECHNIQUES (6)
     { id: 'symfony',              name: 'Symfony',                                 category: 'tech',  level: 8, logo: 'assets/logos/symfony.png',     summary: "Mon framework PHP principal depuis 3 ans, du legacy e-commerce à l'API REST." },
-    { id: 'angular',              name: 'Angular',                                 category: 'tech',  level: 7, logo: 'assets/logos/angular.png',     summary: "Le framework TypeScript que je préfère pour les apps structurées. Signals, standalone." },
+    { id: 'angular',              name: 'Angular',                                 category: 'tech',  level: 6, logo: 'assets/logos/angular.png',     summary: "Le framework TypeScript que je préfère pour les apps structurées. Signals, standalone." },
     { id: 'spring-boot',          name: 'Spring Boot',                             category: 'tech',  level: 7, logo: 'assets/logos/spring-boot.png', summary: "Le backend Java que j'utilise au quotidien chez VenaLabs. APIs sécurisées, JPA." },
     { id: 'nextjs',               name: 'Next.js',                                 category: 'tech',  level: 6, logo: 'assets/logos/nextjs.png',      summary: "Mon réflexe pour un frontend rapide, indexable et bien typé. App Router, RSC, SEO." },
-    { id: 'react-nextjs',         name: 'React',                                   category: 'tech',  level: 6, logo: 'assets/logos/react.png',       summary: "Ma librairie frontend hors Angular. Composants, hooks, intégrations Web3." },
+    { id: 'react-nextjs',         name: 'React',                                   category: 'tech',  level: 7, logo: 'assets/logos/react.png',       summary: "Ma librairie frontend hors Angular. Composants, hooks, intégrations Web3." },
     { id: 'docker',               name: 'Docker',                                  category: 'tech',  level: 6, logo: 'assets/logos/docker.png',      summary: "Le même environnement en dev et en prod. Mis en place seul sur FollowDeen, encore à approfondir." },
 
     // COMPÉTENCES HUMAINES (4)
