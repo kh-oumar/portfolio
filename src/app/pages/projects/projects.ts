@@ -17,16 +17,6 @@ type ProjectListItem = {
   styleUrl: './projects.scss'
 })
 export class ProjectsComponent {
-  get technologyCount(): number {
-    const tags = new Set<string>();
-    for (const project of this.projects) {
-      for (const tag of project.tags) {
-        tags.add(tag.toLowerCase());
-      }
-    }
-    return tags.size;
-  }
-
   projects: ProjectListItem[] = [
     {
       id: 'venalabs',
